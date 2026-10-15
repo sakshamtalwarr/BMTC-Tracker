@@ -485,26 +485,136 @@
       }
     }
 
+    let lastFetchedData = null;
+
     function initMap() {
       if (map) return;
       if (typeof L === 'undefined') {
-        setTimeout(initMap, 400);
+        setTimeout(initMap, 300);
         return;
       }
       try {
+        const mapEl = document.getElementById('map');
+        if (!mapEl) return;
+
         // Default center: Bengaluru
         map = L.map('map', { zoomControl: false }).setView([12.9716, 77.5946], 11);
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // 100% Free Open Source OpenStreetMap (Zero API key required)
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        // 100% Free Open Source OpenStreetMap with parallel subdomains
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
+          subdomains: ['a', 'b', 'c'],
           maxZoom: 19
         }).addTo(map);
 
         markersLayer = L.layerGroup().addTo(map);
+
+        // Force Leaflet to recalculate container dimensions on mobile
+        setTimeout(() => map.invalidateSize(), 150);
+        setTimeout(() => map.invalidateSize(), 600);
+
+        // If data was already loaded before map was ready, render it now
+        if (lastFetchedData) {
+          renderMap(lastFetchedData);
+        }
       } catch (e) {
-        console.warn("Map init deferred:", e);
+        console.warn("Map init error:", e);
+      }
+    }
+
+    function renderMap(data) {
+      if (!map || !markersLayer || typeof L === 'undefined') return;
+
+      try {
+        markersLayer.clearLayers();
+        busMarkers = {};
+
+        // 1. Plot exact turn-by-turn road-snapped polyline
+        if (data.roadPolylines && data.roadPolylines.length > 0) {
+          data.roadPolylines.forEach(coords => {
+            L.polyline(coords, {
+              color: '#1f6feb',
+              weight: 5,
+              opacity: 0.9,
+              lineJoin: 'round',
+              lineCap: 'round',
+              smoothFactor: 1.0
+            }).addTo(markersLayer);
+
+            L.polyline(coords, {
+              color: '#0d419d',
+              weight: 9,
+              opacity: 0.25,
+              lineJoin: 'round',
+              lineCap: 'round',
+              smoothFactor: 1.0
+            }).addTo(markersLayer);
+          });
+        }
+
+        // 2. Plot bus stops along route
+        if (data.routeStops && data.routeStops.length > 0) {
+          data.routeStops.forEach(s => {
+            if (s.lat && s.lon) {
+              L.circleMarker([s.lat, s.lon], {
+                radius: 4,
+                fillColor: '#ffffff',
+                color: '#1f6feb',
+                weight: 2,
+                opacity: 0.9,
+                fillOpacity: 1
+              }).bindPopup(`<b>🚏 ${s.name}</b>`).addTo(markersLayer);
+            }
+          });
+        }
+
+        // 3. Plot live buses
+        if (data.buses && data.buses.length > 0) {
+          data.buses.forEach(b => {
+            const icon = L.divIcon({
+              className: 'custom-bus-icon',
+              html: `
+                <div class="bus-marker-container">
+                  <div class="bus-marker-pin">🚌</div>
+                  <div class="bus-marker-label">${b.vehicleNumber.slice(-4)}</div>
+                </div>
+              `,
+              iconSize: [40, 50],
+              iconAnchor: [20, 25]
+            });
+
+            let popupHtml = `
+              <div style="font-family: sans-serif; min-width: 160px; color: #111;">
+                <b>🚌 ${b.vehicleNumber}</b><br/>
+                <span style="font-size: 11px; color: #555;">${b.serviceType}</span><br/>
+                <div style="margin-top: 5px; font-size: 12px;">Near: <b>${b.currentLocation.nearestStop}</b></div>
+                <div style="font-size: 11px; color: #555;">Direction: ${b.direction}</div>
+            `;
+
+            if (b.targetStopAnalysis) {
+              const t = b.targetStopAnalysis;
+              if (t.hasPassed) {
+                popupHtml += `<div style="color: #b08800; font-weight: bold; margin-top: 4px;">Passed ${t.targetStop}</div>`;
+              } else {
+                popupHtml += `<div style="color: #0969da; font-weight: bold; margin-top: 4px;">ETA: ~${t.estimatedMinutes}m (${t.distanceKm} km)</div>`;
+              }
+            }
+
+            popupHtml += `<div style="font-size: 10px; color: #888; margin-top: 4px;">Ping: ${b.lastUpdated}</div></div>`;
+
+            const marker = L.marker([b.coordinates.lat, b.coordinates.lon], { icon })
+              .bindPopup(popupHtml)
+              .addTo(markersLayer);
+
+            busMarkers[b.vehicleNumber] = marker;
+          });
+
+          // Zoom to fit all markers
+          resetMapView();
+        }
+      } catch (err) {
+        console.error("Error drawing on map:", err);
       }
     }
 
@@ -528,21 +638,25 @@
         mapEl.style.height = '500px';
         btn.innerText = 'Shrink Map';
       }
-      setTimeout(() => map.invalidateSize(), 200);
+      setTimeout(() => map && map.invalidateSize(), 200);
     }
 
     function resetMapView() {
-      if (markersLayer && markersLayer.getLayers().length > 0) {
-        const bounds = L.featureGroup(markersLayer.getLayers()).getBounds();
-        if (bounds.isValid()) {
-          map.fitBounds(bounds, { padding: [30, 30] });
+      if (!map || !markersLayer) return;
+      try {
+        const layers = markersLayer.getLayers();
+        if (layers.length > 0) {
+          const bounds = L.featureGroup(layers).getBounds();
+          if (bounds.isValid()) {
+            map.fitBounds(bounds, { padding: [30, 30] });
+          }
         }
-      }
+      } catch (_) {}
     }
 
     function focusBus(vehicleNumber) {
       const marker = busMarkers[vehicleNumber];
-      if (marker) {
+      if (marker && map) {
         map.setView(marker.getLatLng(), 15, { animate: true });
         marker.openPopup();
         window.scrollTo({ top: document.getElementById('mapWrapper').offsetTop - 10, behavior: 'smooth' });
@@ -568,73 +682,16 @@
         let apiUrl = `/api/track?route=${encodeURIComponent(route)}`;
         if (stop) apiUrl += `&stop=${encodeURIComponent(stop)}`;
 
-        // Update assistant URL box
-        document.getElementById('assistantUrlBox').innerText = `${window.location.origin}/api/assistant?route=${encodeURIComponent(route)}${stop ? `&stop=${encodeURIComponent(stop)}` : ''}`;
-
         const res = await fetch(apiUrl);
         const data = await res.json();
+        lastFetchedData = data;
 
         header.style.display = 'flex';
         document.getElementById('routeTitle').innerText = `Route: ${data.route || route}`;
         document.getElementById('busCount').innerText = `${data.totalActiveBuses || 0} active`;
 
-        // Clear existing map markers
-        markersLayer.clearLayers();
-        busMarkers = {};
-        currentBuses = data.buses || [];
-
-        // Plot exact turn-by-turn road-snapped polylines following real streets
-        if (data.roadPolylines && data.roadPolylines.length > 0) {
-          data.roadPolylines.forEach(coords => {
-            // Main road route path
-            L.polyline(coords, {
-              color: '#1f6feb',
-              weight: 5,
-              opacity: 0.9,
-              lineJoin: 'round',
-              lineCap: 'round',
-              smoothFactor: 1.0
-            }).addTo(markersLayer);
-
-            // Subtle outer glow to make the bus route stand out on roads
-            L.polyline(coords, {
-              color: '#0d419d',
-              weight: 9,
-              opacity: 0.25,
-              lineJoin: 'round',
-              lineCap: 'round',
-              smoothFactor: 1.0
-            }).addTo(markersLayer);
-          });
-        } else if (data.routeStops && data.routeStops.length > 0) {
-          const latlngs = data.routeStops
-            .filter(s => s.lat && s.lon)
-            .map(s => [s.lat, s.lon]);
-
-          if (latlngs.length > 1) {
-            L.polyline(latlngs, {
-              color: '#1f6feb',
-              weight: 4,
-              opacity: 0.8
-            }).addTo(markersLayer);
-          }
-        }
-
-        // Plot bus stop dots along the route
-        if (data.routeStops && data.routeStops.length > 0) {
-          data.routeStops.forEach(s => {
-            if (s.lat && s.lon) {
-              L.circleMarker([s.lat, s.lon], {
-                radius: 4,
-                fillColor: '#ffffff',
-                color: '#1f6feb',
-                weight: 2,
-                opacity: 0.9,
-                fillOpacity: 1
-              }).bindPopup(`<b>🚏 ${s.name}</b>`).addTo(markersLayer);
-            }
-          });
-        }
+        // Safely draw on map
+        renderMap(data);
 
         if (!data.success || !data.buses || data.buses.length === 0) {
           list.innerHTML = `
