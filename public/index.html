@@ -654,6 +654,121 @@
       display: flex;
       justify-content: center;
     }
+
+    /* Coffee Header Button */
+    .coffee-icon-btn {
+      width: 36px;
+      height: 36px;
+      background: var(--bg);
+      border: none;
+      border-radius: 12px;
+      box-shadow: var(--neu-raised-sm);
+      color: #b45309;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      flex-shrink: 0;
+    }
+
+    .coffee-icon-btn:hover {
+      box-shadow: var(--neu-raised-hover);
+      color: #92400e;
+    }
+
+    .coffee-icon-btn:active {
+      box-shadow: var(--neu-inset-sm);
+      transform: scale(0.95);
+    }
+
+    /* Buy Me a Coffee Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(45, 55, 72, 0.45);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .neu-modal {
+      background: var(--bg);
+      border-radius: 24px;
+      padding: 22px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 12px 12px 28px rgba(0,0,0,0.2), -10px -10px 24px #ffffff;
+      animation: modalPop 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes modalPop {
+      0% { transform: scale(0.92); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .coffee-modal-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: var(--bg);
+      box-shadow: var(--neu-inset-sm);
+      color: #b45309;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .modal-close-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: none;
+      background: var(--bg);
+      box-shadow: var(--neu-raised-sm);
+      cursor: pointer;
+      font-size: 1.3rem;
+      line-height: 1;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+
+    .modal-close-btn:active {
+      box-shadow: var(--neu-inset-sm);
+    }
+
+    .upi-box {
+      background: var(--bg);
+      box-shadow: var(--neu-inset);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin: 12px 0 4px;
+    }
+
+    /* Footer */
+    .app-footer {
+      text-align: center;
+      margin-top: 28px;
+      padding: 18px 12px;
+      border-radius: 18px;
+      box-shadow: var(--neu-inset-sm);
+    }
   </style>
 </head>
 <body>
@@ -669,9 +784,20 @@
         <span>Live Telematics</span>
       </div>
     </div>
-    <div class="live-status-pill">
-      <div class="pulse-dot"></div>
-      <span>GPS ACTIVE</span>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <!-- Buy Me a Coffee Icon Only Button -->
+      <button class="coffee-icon-btn" onclick="openCoffeeModal()" title="Buy me a coffee" aria-label="Buy me a coffee">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 2v2"/><path d="M14 2v2"/><path d="M6 2v2"/>
+          <path d="M18 8a3 3 0 0 1 3 3c0 2-1 3-3 3h-1"/>
+          <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/>
+        </svg>
+      </button>
+
+      <div class="live-status-pill">
+        <div class="pulse-dot"></div>
+        <span>GPS ACTIVE</span>
+      </div>
     </div>
   </header>
 
@@ -830,6 +956,64 @@
       </svg>
       <span>Test Speech Synthesis Audio</span>
     </button>
+  </div>
+
+  <!-- Built with Love Footer -->
+  <footer class="app-footer">
+    <div style="font-size: 0.88rem; font-weight: 700; color: var(--text);">
+      Built with ❤️ by <strong>Saksham Talwar</strong>
+    </div>
+    <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 5px; font-weight: 500;">
+      Real-time BMTC transit telemetry for Bengaluru commuters
+    </div>
+  </footer>
+
+  <!-- Buy Me a Coffee Modal -->
+  <div id="coffeeModal" class="modal-overlay" style="display: none;" onclick="closeCoffeeModal(event)">
+    <div class="neu-modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="coffee-modal-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 2v2"/><path d="M14 2v2"/><path d="M6 2v2"/>
+              <path d="M18 8a3 3 0 0 1 3 3c0 2-1 3-3 3h-1"/>
+              <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/>
+            </svg>
+          </div>
+          <div>
+            <div style="font-size: 1.05rem; font-weight: 800; color: var(--text);">Buy Saksham a Coffee</div>
+            <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">Support Namma BMTC Tracker</div>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeCoffeeModal()">&times;</button>
+      </div>
+
+      <p style="font-size: 0.82rem; color: var(--text); line-height: 1.45; margin: 14px 0 10px;">
+        If this real-time tracker made your daily commute easier, consider supporting the development!
+      </p>
+
+      <div class="upi-box">
+        <div style="font-size: 0.68rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">UPI ID</div>
+        <div id="upiIdText" style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.95rem; font-weight: 800; color: var(--accent-blue); margin-top: 2px;">saksham.talwar@federal</div>
+      </div>
+
+      <div style="display: flex; gap: 8px; margin-top: 14px;">
+        <button class="neu-action-btn" id="copyUpiBtn" style="flex: 1;" onclick="copyUpiId()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+            <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+          </svg>
+          <span id="copyUpiLabel">Copy UPI ID</span>
+        </button>
+
+        <a class="neu-action-btn" style="flex: 1; color: var(--accent-green); text-decoration: none;" href="upi://pay?pa=saksham.talwar@federal&pn=Saksham%20Talwar&cu=INR&tn=Buy%20me%20a%20coffee">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+          <span>Pay via UPI App</span>
+        </a>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -1367,6 +1551,33 @@
         alert(`Voice Fulfillment Response:\n\n"${speechText}"`);
       } catch (e) {
         alert("Failed to call voice endpoint: " + e.message);
+      }
+    }
+
+    // Buy Me a Coffee Modal Handlers
+    function openCoffeeModal() {
+      const modal = document.getElementById('coffeeModal');
+      if (modal) modal.style.display = 'flex';
+    }
+
+    function closeCoffeeModal() {
+      const modal = document.getElementById('coffeeModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    async function copyUpiId() {
+      const upiText = 'saksham.talwar@federal';
+      const label = document.getElementById('copyUpiLabel');
+      try {
+        await navigator.clipboard.writeText(upiText);
+        if (label) {
+          label.innerText = 'Copied!';
+          setTimeout(() => label.innerText = 'Copy UPI ID', 2000);
+        }
+      } catch (_) {
+        if (label) {
+          label.innerText = 'Copied!';
+        }
       }
     }
 
