@@ -6,8 +6,9 @@
   <title>Namma BMTC Live Tracker</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20%22100%22%20%22100%22><text y=%22.9em%22 font-size=%2290%22>🚌</text></svg>">
   
-  <!-- Leaflet Map CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Leaflet Map CSS & JS via Cloudflare CDN (ultra fast & reliable) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 
   <style>
     :root {
@@ -464,16 +465,11 @@
     <p style="color: var(--text-muted); font-size: 0.78rem;">
       You can ask Google Assistant or Siri by hitting the voice fulfillment endpoint:
     </p>
-    <div class="code-box" id="assistantUrlBox">
-      Loading API endpoint...
-    </div>
+    <div class="code-box" id="assistantUrlBox">https://namma-bmtc-tracker.vercel.app/api/commute?to=home</div>
     <button class="map-btn" style="margin-top: 6px; font-size: 0.75rem;" onclick="testVoiceSpeech()">
       🔊 Test Voice Response Now
     </button>
   </div>
-
-  <!-- Leaflet Map JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
     let map = null;
@@ -481,22 +477,35 @@
     let busMarkers = {};
     let currentBuses = [];
 
+    function updateAssistantUrl() {
+      const origin = window.location.origin || 'https://namma-bmtc-tracker.vercel.app';
+      const el = document.getElementById('assistantUrlBox');
+      if (el) {
+        el.innerText = `${origin}/api/commute?to=home`;
+      }
+    }
+
     function initMap() {
-      // Default center: Bengaluru
-      map = L.map('map', { zoomControl: false }).setView([12.9716, 77.5946], 11);
-      L.control.zoom({ position: 'bottomright' }).addTo(map);
+      if (map) return;
+      if (typeof L === 'undefined') {
+        setTimeout(initMap, 400);
+        return;
+      }
+      try {
+        // Default center: Bengaluru
+        map = L.map('map', { zoomControl: false }).setView([12.9716, 77.5946], 11);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-      // 100% Free Open Source OpenStreetMap (Zero API key required)
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
-        maxZoom: 19
-      }).addTo(map);
+        // 100% Free Open Source OpenStreetMap (Zero API key required)
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
+          maxZoom: 19
+        }).addTo(map);
 
-      markersLayer = L.layerGroup().addTo(map);
-      
-      // Update voice endpoint URL box with current host
-      document.getElementById('assistantUrlBox').innerText = 
-        `${window.location.origin}/api/assistant?route=KIA-7A&stop=Kadugodi`;
+        markersLayer = L.layerGroup().addTo(map);
+      } catch (e) {
+        console.warn("Map init deferred:", e);
+      }
     }
 
     function setRoute(name) {
@@ -786,6 +795,7 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
+      updateAssistantUrl();
       initMap();
       track();
     });
