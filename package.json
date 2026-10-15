@@ -1,0 +1,16 @@
+{
+  "name": "bmtc-tracker",
+  "version": "1.0.0",
+  "description": "Live BMTC Bus Tracker, ETA Dashboard & MCP Server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "track": "node track.js"
+  },
+  "keywords": ["bmtc", "bangalore", "bus-tracking", "mcp", "nammabmtc"],
+  "author": "sakshamtalwar",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
