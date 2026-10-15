@@ -4,13 +4,13 @@ const url = require('url');
 const STOPS = {
   office: {
     name: 'Domlur',
-    fullName: 'Domlur / Murugeshpalya (Near M&A Ventures)',
-    keywords: ['domlur', 'murugeshpalya', 'command hospital'],
+    fullName: 'Domlur Bus Stand (Office: Murugeshpalya)',
+    keywords: ['domlur', 'murugeshpalya', 'office'],
   },
   home: {
     name: 'RM Guttahalli',
-    fullName: 'RM Guttahalli Bus Stand',
-    keywords: ['guttahalli', 'rm guttahalli', 'guthhali'],
+    fullName: 'RM Guttahalli Bus Stand (Home)',
+    keywords: ['guttahalli', 'rm guttahalli', 'guthhali', 'home'],
   },
 };
 
@@ -94,8 +94,8 @@ module.exports = async (req, res) => {
     const t = nextBus.targetStopAnalysis;
 
     let speech = isGoingHome
-      ? `Heading Home to RM Guttahalli: Your next ${route} bus (${nextBus.vehicleNumber}) will reach your office stop at Domlur in about ${t.estimatedMinutes} minutes. It is currently ${t.distanceKm} kilometers away near ${nextBus.currentLocation.nearestStop}.`
-      : `Heading to Office at M&A Ventures: Your next ${route} bus (${nextBus.vehicleNumber}) will reach RM Guttahalli in about ${t.estimatedMinutes} minutes. It is currently ${t.distanceKm} kilometers away near ${nextBus.currentLocation.nearestStop}.`;
+      ? `Heading Home: Your next ${route} bus (${nextBus.vehicleNumber}) will reach Domlur Bus Stand in about ${t.estimatedMinutes} minutes. It is currently ${t.distanceKm} kilometers away near ${nextBus.currentLocation.nearestStop}.`
+      : `Heading to Murugeshpalya Office: Your next ${route} bus (${nextBus.vehicleNumber}) will reach RM Guttahalli in about ${t.estimatedMinutes} minutes to take you to Domlur Bus Stand. It is currently ${t.distanceKm} kilometers away near ${nextBus.currentLocation.nearestStop}.`;
 
     if (candidateBuses.length > 1) {
       const secondBus = candidateBuses[1];
