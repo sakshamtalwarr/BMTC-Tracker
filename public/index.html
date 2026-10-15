@@ -407,6 +407,18 @@
 
   <div class="input-card">
     <div class="input-group">
+      <label>1-Tap Commute (KIA-7A)</label>
+      <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+        <button class="track-btn" style="background: #238636; flex: 1; padding: 10px; font-size: 0.85rem;" onclick="quickCommute('home')">
+          🏠 Go Home (Guttahalli)
+        </button>
+        <button class="track-btn" style="background: #8957e5; flex: 1; padding: 10px; font-size: 0.85rem;" onclick="quickCommute('office')">
+          🏢 Go to Office (Domlur)
+        </button>
+      </div>
+    </div>
+
+    <div class="input-group">
       <label>Quick Select Route</label>
       <div class="chips">
         <button class="chip active" onclick="setRoute('KIA-7A')">KIA-7A</button>
@@ -420,7 +432,7 @@
 
     <div class="input-group">
       <label>Your Bus Stand / Stop (For ETA)</label>
-      <input type="text" id="stopInput" placeholder="e.g. Kadugodi, Silk Board, Airport">
+      <input type="text" id="stopInput" placeholder="e.g. RM Guttahalli, Domlur, Silk Board">
     </div>
 
     <button class="track-btn" id="trackBtn" onclick="track()">
@@ -676,6 +688,36 @@
 
       } catch (err) {
         list.innerHTML = `<div class="empty-state">❌ Failed to fetch live data: ${err.message}</div>`;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>Track Bus Live</span>';
+      }
+    async function quickCommute(destination) {
+      const btn = document.getElementById('trackBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner"></div> Checking Commute Bus...';
+
+      if (destination === 'home') {
+        document.getElementById('routeInput').value = 'KIA-7A';
+        document.getElementById('stopInput').value = 'Domlur';
+      } else {
+        document.getElementById('routeInput').value = 'KIA-7A';
+        document.getElementById('stopInput').value = 'RM Guttahalli';
+      }
+
+      try {
+        const res = await fetch(`/api/commute?to=${destination}`);
+        const data = await res.json();
+
+        if (data.speech && 'speechSynthesis' in window) {
+          const utterance = new SpeechSynthesisUtterance(data.speech);
+          window.speechSynthesis.speak(utterance);
+        }
+
+        // Run full track render
+        await track();
+      } catch (e) {
+        alert("Failed to check commute: " + e.message);
       } finally {
         btn.disabled = false;
         btn.innerHTML = '<span>Track Bus Live</span>';
