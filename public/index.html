@@ -455,6 +455,14 @@
     <span id="busCount">0 buses active</span>
   </div>
 
+  <!-- Direction Selector Tabs to eliminate confusion -->
+  <div id="directionFilterContainer" style="display: none; margin: 8px 0 12px;">
+    <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">
+      Filter by Travel Direction:
+    </div>
+    <div class="chips" id="directionChipsContainer"></div>
+  </div>
+
   <div id="resultsList"></div>
 
   <!-- Google Assistant & Siri Voice Helper -->
@@ -523,7 +531,85 @@
       }
     }
 
-    function renderMap(data) {
+    let currentFilterDirection = 'ALL';
+
+    function matchesDirection(b, filterDest) {
+      if (!filterDest || filterDest === 'ALL') return true;
+      const d = (b.destination || '').toLowerCase();
+      const f = filterDest.toLowerCase();
+      if (b.destination === filterDest) return true;
+      if (f === 'airport' && d.includes('airport')) return true;
+      if (f === 'hsr' && d.includes('hsr')) return true;
+      return d.includes(f);
+    }
+
+    function setDirectionFilter(destName) {
+      currentFilterDirection = destName;
+      document.querySelectorAll('#directionChipsContainer .chip').forEach(c => {
+        const dest = c.dataset.dest || '';
+        const isActive = dest === destName ||
+          (destName === 'AIRPORT' && dest.toLowerCase().includes('airport')) ||
+          (destName === 'HSR' && dest.toLowerCase().includes('hsr'));
+        c.classList.toggle('active', isActive);
+      });
+      if (lastFetchedData) {
+        renderMap(lastFetchedData, currentFilterDirection);
+        renderCards(lastFetchedData, currentFilterDirection);
+      }
+    }
+
+    function renderDirectionChips(buses) {
+      const container = document.getElementById('directionFilterContainer');
+      const chipsEl = document.getElementById('directionChipsContainer');
+      if (!buses || buses.length === 0) {
+        container.style.display = 'none';
+        return;
+      }
+
+      const destMap = {};
+      buses.forEach(b => {
+        const d = b.destination || 'Other';
+        destMap[d] = (destMap[d] || 0) + 1;
+      });
+
+      const destKeys = Object.keys(destMap);
+      if (destKeys.length <= 1) {
+        container.style.display = 'none';
+        return;
+      }
+
+      container.style.display = 'block';
+      let chipsHtml = `
+        <button class="chip ${currentFilterDirection === 'ALL' ? 'active' : ''}" data-dest="ALL" onclick="setDirectionFilter('ALL')">
+          🔄 All (${buses.length})
+        </button>
+      `;
+
+      destKeys.forEach(dest => {
+        let label = dest;
+        if (dest.toLowerCase().includes('airport')) {
+          label = `✈️ Towards Airport (${destMap[dest]})`;
+        } else if (dest.toLowerCase().includes('hsr')) {
+          label = `🏙️ Towards HSR (${destMap[dest]})`;
+        } else {
+          label = `➜ ${dest.split(' ')[0]} (${destMap[dest]})`;
+        }
+
+        const isActive = (currentFilterDirection === dest) ||
+          (currentFilterDirection === 'AIRPORT' && dest.toLowerCase().includes('airport')) ||
+          (currentFilterDirection === 'HSR' && dest.toLowerCase().includes('hsr'));
+
+        chipsHtml += `
+          <button class="chip ${isActive ? 'active' : ''}" data-dest="${dest}" onclick="setDirectionFilter('${dest}')">
+            ${label}
+          </button>
+        `;
+      });
+
+      chipsEl.innerHTML = chipsHtml;
+    }
+
+    function renderMap(data, filterDest = 'ALL') {
       if (!map || !markersLayer || typeof L === 'undefined') return;
 
       try {
@@ -569,57 +655,143 @@
           });
         }
 
-        // 3. Plot live buses
-        if (data.buses && data.buses.length > 0) {
-          data.buses.forEach(b => {
-            const icon = L.divIcon({
-              className: 'custom-bus-icon',
-              html: `
-                <div class="bus-marker-container">
-                  <div class="bus-marker-pin">🚌</div>
-                  <div class="bus-marker-label">${b.vehicleNumber.slice(-4)}</div>
-                </div>
-              `,
-              iconSize: [40, 50],
-              iconAnchor: [20, 25]
-            });
+        // 3. Filter buses for map
+        let busesToDraw = data.buses || [];
+        if (filterDest !== 'ALL') {
+          busesToDraw = busesToDraw.filter(b => matchesDirection(b, filterDest));
+        }
 
-            let popupHtml = `
-              <div style="font-family: sans-serif; min-width: 160px; color: #111;">
-                <b>🚌 ${b.vehicleNumber}</b><br/>
-                <span style="font-size: 11px; color: #555;">${b.serviceType}</span><br/>
-                <div style="margin-top: 5px; font-size: 12px;">Near: <b>${b.currentLocation.nearestStop}</b></div>
-                <div style="font-size: 11px; color: #555;">Direction: ${b.direction}</div>
-            `;
-
-            if (b.targetStopAnalysis) {
-              const t = b.targetStopAnalysis;
-              if (t.hasPassed) {
-                popupHtml += `<div style="color: #b08800; font-weight: bold; margin-top: 4px;">Passed ${t.targetStop}</div>`;
-              } else {
-                popupHtml += `<div style="color: #0969da; font-weight: bold; margin-top: 4px;">ETA: ~${t.estimatedMinutes}m (${t.distanceKm} km)</div>`;
-              }
-            }
-
-            popupHtml += `<div style="font-size: 10px; color: #888; margin-top: 4px;">Ping: ${b.lastUpdated}</div></div>`;
-
-            const marker = L.marker([b.coordinates.lat, b.coordinates.lon], { icon })
-              .bindPopup(popupHtml)
-              .addTo(markersLayer);
-
-            busMarkers[b.vehicleNumber] = marker;
+        busesToDraw.forEach(b => {
+          const isAirport = b.destination.toLowerCase().includes('airport');
+          const pinColor = isAirport ? '#238636' : '#8957e5';
+          const icon = L.divIcon({
+            className: 'custom-bus-icon',
+            html: `
+              <div class="bus-marker-container">
+                <div class="bus-marker-pin" style="background: ${pinColor}; box-shadow: 0 0 10px ${pinColor};">🚌</div>
+                <div class="bus-marker-label">${b.vehicleNumber.slice(-4)}</div>
+              </div>
+            `,
+            iconSize: [40, 50],
+            iconAnchor: [20, 25]
           });
 
-          // Zoom to fit all markers
-          resetMapView();
-        }
+          let popupHtml = `
+            <div style="font-family: sans-serif; min-width: 170px; color: #111;">
+              <b>🚌 ${b.vehicleNumber}</b> (${b.serviceType})<br/>
+              <div style="font-size: 11px; font-weight: bold; color: ${isAirport ? '#1a7f37' : '#6e40c9'}; margin: 3px 0;">
+                ${isAirport ? '✈️ Towards Airport' : '🏙️ Towards HSR Layout'}
+              </div>
+              <div style="font-size: 12px; margin-top: 4px;">Near: <b>${b.currentLocation.nearestStop}</b></div>
+          `;
+
+          if (b.targetStopAnalysis) {
+            const t = b.targetStopAnalysis;
+            if (t.hasPassed) {
+              popupHtml += `<div style="color: #b08800; font-weight: bold; margin-top: 4px;">Passed ${t.targetStop}</div>`;
+            } else {
+              popupHtml += `<div style="color: #0969da; font-weight: bold; margin-top: 4px;">ETA: ~${t.estimatedMinutes}m (${t.distanceKm} km)</div>`;
+            }
+          }
+
+          popupHtml += `<div style="font-size: 10px; color: #888; margin-top: 4px;">Ping: ${b.lastUpdated}</div></div>`;
+
+          const marker = L.marker([b.coordinates.lat, b.coordinates.lon], { icon })
+            .bindPopup(popupHtml)
+            .addTo(markersLayer);
+
+          busMarkers[b.vehicleNumber] = marker;
+        });
+
+        resetMapView();
       } catch (err) {
-        console.error("Error drawing on map:", err);
+        console.error("renderMap error:", err);
       }
+    }
+
+    function renderCards(data, filterDest = 'ALL') {
+      const list = document.getElementById('resultsList');
+      if (!data.success || !data.buses || data.buses.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <div style="font-size: 2rem; margin-bottom: 8px;">⏳</div>
+            <p>No active GPS buses currently reported on route.</p>
+          </div>
+        `;
+        return;
+      }
+
+      let busesToShow = data.buses;
+      if (filterDest !== 'ALL') {
+        busesToShow = busesToShow.filter(b => matchesDirection(b, filterDest));
+      }
+
+      if (busesToShow.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <p>No active buses heading towards <b>${filterDest}</b> right now.</p>
+            <button class="chip" style="margin-top: 8px;" onclick="setDirectionFilter('ALL')">Show all directions</button>
+          </div>
+        `;
+        return;
+      }
+
+      list.innerHTML = busesToShow.map(b => {
+        let etaHtml = '';
+        if (b.targetStopAnalysis) {
+          const t = b.targetStopAnalysis;
+          if (t.hasPassed) {
+            etaHtml = `<div class="eta-badge" style="border-color: #d29922; color: #d29922; background: rgba(210,153,34,0.1);">Passed stop</div>`;
+          } else {
+            etaHtml = `<div class="eta-badge">⏳ ~${t.estimatedMinutes} mins<div style="font-size: 0.7rem; font-weight: 500;">${t.distanceKm} km away</div></div>`;
+          }
+        }
+
+        const isAirport = b.destination.toLowerCase().includes('airport');
+        const isHsr = b.destination.toLowerCase().includes('hsr');
+        let dirBanner = '';
+        if (isAirport) {
+          dirBanner = `<div style="display:inline-flex; align-items:center; gap:4px; background: rgba(35, 134, 54, 0.15); color: #3fb950; border: 1px solid #238636; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; margin-bottom: 8px;">✈️ TOWARDS AIRPORT (Via RM Guttahalli)</div>`;
+        } else if (isHsr) {
+          dirBanner = `<div style="display:inline-flex; align-items:center; gap:4px; background: rgba(137, 87, 229, 0.15); color: #a371f7; border: 1px solid #8957e5; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; margin-bottom: 8px;">🏙️ TOWARDS HSR LAYOUT (Via Domlur)</div>`;
+        } else {
+          dirBanner = `<div class="direction-pill">📍 ${b.direction}</div>`;
+        }
+
+        return `
+          <div class="bus-card" onclick="focusBus('${b.vehicleNumber}')">
+            <div class="bus-card-top">
+              <div>
+                <div class="bus-plate">🚌 ${b.vehicleNumber}</div>
+                <div class="bus-type">${b.serviceType}</div>
+              </div>
+              ${etaHtml}
+            </div>
+
+            <div>${dirBanner}</div>
+
+            <div class="location-box">
+              <div class="label">CURRENT POSITION</div>
+              <div>Near <b>${b.currentLocation.nearestStop}</b> (~${b.currentLocation.distanceFromNearestStopKm} km)</div>
+              <div style="font-size: 0.72rem; color: #8b949e; margin-top: 4px;">Last ping: ${b.lastUpdated}</div>
+            </div>
+
+            <div class="card-actions">
+              <button class="map-btn" onclick="event.stopPropagation(); focusBus('${b.vehicleNumber}')">
+                🗺️ Focus on Map
+              </button>
+              <a class="map-btn" href="${b.googleMapsLink}" target="_blank" onclick="event.stopPropagation()">
+                📍 Google Maps
+              </a>
+            </div>
+          </div>
+        `;
+      }).join('');
     }
 
     function setRoute(name) {
       document.getElementById('routeInput').value = name;
+      currentFilterDirection = 'ALL';
       document.querySelectorAll('.chip').forEach(c => {
         c.classList.toggle('active', c.innerText === name);
       });
@@ -667,7 +839,6 @@
       const route = document.getElementById('routeInput').value.trim();
       const stop = document.getElementById('stopInput').value.trim();
       const btn = document.getElementById('trackBtn');
-      const list = document.getElementById('resultsList');
       const header = document.getElementById('resultsHeader');
 
       if (!route) {
@@ -690,107 +861,12 @@
         document.getElementById('routeTitle').innerText = `Route: ${data.route || route}`;
         document.getElementById('busCount').innerText = `${data.totalActiveBuses || 0} active`;
 
-        // Safely draw on map
-        renderMap(data);
-
-        if (!data.success || !data.buses || data.buses.length === 0) {
-          list.innerHTML = `
-            <div class="empty-state">
-              <div style="font-size: 2rem; margin-bottom: 8px;">⏳</div>
-              <p>No active GPS buses currently reported on route <b>${route}</b>.</p>
-              <p style="font-size: 0.78rem; margin-top: 6px;">Buses may not be running right now or drivers haven't logged in.</p>
-            </div>
-          `;
-          return;
-        }
-
-        // Add buses to Map
-        data.buses.forEach(b => {
-          const icon = L.divIcon({
-            className: 'custom-bus-icon',
-            html: `
-              <div class="bus-marker-container">
-                <div class="bus-marker-pin">🚌</div>
-                <div class="bus-marker-label">${b.vehicleNumber.slice(-4)}</div>
-              </div>
-            `,
-            iconSize: [40, 50],
-            iconAnchor: [20, 25]
-          });
-
-          let popupHtml = `
-            <div style="font-family: sans-serif; min-width: 160px; color: #111;">
-              <b>🚌 ${b.vehicleNumber}</b><br/>
-              <span style="font-size: 11px; color: #555;">${b.serviceType}</span><br/>
-              <div style="margin-top: 5px; font-size: 12px;">Near: <b>${b.currentLocation.nearestStop}</b></div>
-              <div style="font-size: 11px; color: #555;">Direction: ${b.direction}</div>
-          `;
-
-          if (b.targetStopAnalysis) {
-            const t = b.targetStopAnalysis;
-            if (t.hasPassed) {
-              popupHtml += `<div style="color: #b08800; font-weight: bold; margin-top: 4px;">Passed ${t.targetStop}</div>`;
-            } else {
-              popupHtml += `<div style="color: #0969da; font-weight: bold; margin-top: 4px;">ETA: ~${t.estimatedMinutes}m (${t.distanceKm} km)</div>`;
-            }
-          }
-
-          popupHtml += `<div style="font-size: 10px; color: #888; margin-top: 4px;">Ping: ${b.lastUpdated}</div></div>`;
-
-          const marker = L.marker([b.coordinates.lat, b.coordinates.lon], { icon })
-            .bindPopup(popupHtml)
-            .addTo(markersLayer);
-
-          busMarkers[b.vehicleNumber] = marker;
-        });
-
-        // Zoom map to fit all buses
-        resetMapView();
-
-        // Render bus cards in list
-        list.innerHTML = data.buses.map(b => {
-          let etaHtml = '';
-          if (b.targetStopAnalysis) {
-            const t = b.targetStopAnalysis;
-            if (t.hasPassed) {
-              etaHtml = `<div class="eta-badge" style="border-color: #d29922; color: #d29922; background: rgba(210,153,34,0.1);">Passed stop</div>`;
-            } else {
-              etaHtml = `<div class="eta-badge">⏳ ~${t.estimatedMinutes} mins<div style="font-size: 0.7rem; font-weight: 500;">${t.distanceKm} km away</div></div>`;
-            }
-          }
-
-          return `
-            <div class="bus-card" onclick="focusBus('${b.vehicleNumber}')">
-              <div class="bus-card-top">
-                <div>
-                  <div class="bus-plate">🚌 ${b.vehicleNumber}</div>
-                  <div class="bus-type">${b.serviceType}</div>
-                </div>
-                ${etaHtml}
-              </div>
-
-              <div class="direction-pill">📍 ${b.direction}</div>
-
-              <div class="location-box">
-                <div class="label">CURRENT POSITION</div>
-                <div>Near <b>${b.currentLocation.nearestStop}</b> (~${b.currentLocation.distanceFromNearestStopKm} km)</div>
-                <div style="font-size: 0.72rem; color: #8b949e; margin-top: 4px;">Last ping: ${b.lastUpdated}</div>
-              </div>
-
-              <div class="card-actions">
-                <button class="map-btn" onclick="event.stopPropagation(); focusBus('${b.vehicleNumber}')">
-                  🗺️ Focus on Map
-                </button>
-                <a class="map-btn" href="${b.googleMapsLink}" target="_blank" onclick="event.stopPropagation()">
-                  📍 Google Maps
-                </a>
-              </div>
-            </div>
-          `;
-        }).join('');
+        renderDirectionChips(data.buses);
+        renderMap(data, currentFilterDirection);
+        renderCards(data, currentFilterDirection);
 
       } catch (err) {
-        list.innerHTML = `<div class="empty-state">❌ Failed to fetch live data: ${err.message}</div>`;
+        document.getElementById('resultsList').innerHTML = `<div class="empty-state">❌ Failed to fetch live data: ${err.message}</div>`;
       } finally {
         btn.disabled = false;
         btn.innerHTML = '<span>Track Bus Live</span>';
@@ -805,9 +881,11 @@
       if (destination === 'home') {
         document.getElementById('routeInput').value = 'KIA-7A';
         document.getElementById('stopInput').value = 'Domlur';
+        currentFilterDirection = 'AIRPORT';
       } else {
         document.getElementById('routeInput').value = 'KIA-7A';
         document.getElementById('stopInput').value = 'RM Guttahalli';
+        currentFilterDirection = 'HSR';
       }
 
       try {

@@ -60,23 +60,20 @@ module.exports = async (req, res) => {
     }
 
     // Filter buses that are heading towards the user's destination
-    // If going home (Domlur -> RM Guttahalli): heading towards Airport
-    // If going to office (RM Guttahalli -> Domlur): heading towards HSR Layout
-    const expectedDirKeyword = isGoingHome ? 'Airport' : 'HSR Layout';
-
+    // If going home (Domlur -> RM Guttahalli): heading towards Kempegowda International Airport
+    // If going to office (RM Guttahalli -> Domlur): heading towards HSR Layout BDA Complex
     const relevantBuses = data.buses.filter((b) => {
-      const dirMatch = b.direction.toLowerCase().includes(expectedDirKeyword.toLowerCase());
+      const dest = (b.destination || '').toLowerCase();
+      const dirMatch = isGoingHome
+        ? dest.includes('airport')
+        : (dest.includes('hsr') || dest.includes('complex'));
       const hasNotPassed = b.targetStopAnalysis && !b.targetStopAnalysis.hasPassed;
       return dirMatch && hasNotPassed;
     });
 
-    // If no buses in ideal window, fallback to all upcoming buses towards that stop
-    const candidateBuses = relevantBuses.length > 0 
-      ? relevantBuses 
-      : data.buses.filter((b) => b.targetStopAnalysis && !b.targetStopAnalysis.hasPassed);
-
-    if (candidateBuses.length === 0) {
-      const speech = `There are currently ${data.totalActiveBuses} active buses on route ${route}, but all approaching buses have already passed ${boardingStopName}. The next bus should start soon.`;
+    if (relevantBuses.length === 0) {
+      const dirLabel = isGoingHome ? '✈️ Airport (towards RM Guttahalli)' : '🏙️ HSR Layout (towards Domlur)';
+      const speech = `There are ${data.totalActiveBuses} active ${route} buses right now, but none currently heading towards ${dirLabel} are approaching ${boardingStopName} yet. Please check back in a few minutes.`;
       return send(200, {
         success: true,
         speech,
@@ -85,6 +82,8 @@ module.exports = async (req, res) => {
         buses: data.buses,
       });
     }
+
+    const candidateBuses = relevantBuses;
 
     // Sort by nearest arrival time
     candidateBuses.sort(
