@@ -1,4 +1,5 @@
 const { searchBusStop } = require('../bmtc');
+const url = require('url');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -6,21 +7,31 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
-    res.status(204).end();
-    return;
+    if (res.status) return res.status(204).end();
+    res.writeHead(204);
+    return res.end();
   }
 
-  const { q } = req.query;
+  const parsed = url.parse(req.url, true);
+  const query = req.query || parsed.query || {};
+  const q = query.q;
+
+  const send = (code, obj) => {
+    if (typeof res.status === 'function') {
+      return res.status(code).json(obj);
+    }
+    res.writeHead(code, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(obj));
+  };
 
   if (!q) {
-    res.status(400).json({ success: false, message: 'q query parameter is required' });
-    return;
+    return send(400, { success: false, message: 'q query parameter is required (e.g. ?q=Silk)' });
   }
 
   try {
     const stops = await searchBusStop(q);
-    res.status(200).json({ success: true, stops: stops.slice(0, 15) });
+    return send(200, { success: true, stops: stops.slice(0, 15) });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    return send(500, { success: false, message: err.message });
   }
 };

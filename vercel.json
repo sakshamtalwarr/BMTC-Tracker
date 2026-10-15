@@ -1,7 +1,6 @@
 {
+  "version": 2,
   "rewrites": [
-    { "source": "/", "destination": "/public/index.html" },
-    { "source": "/api/track", "destination": "/api/track.js" },
-    { "source": "/api/stops", "destination": "/api/stops.js" }
+    { "source": "/", "destination": "/public/index.html" }
   ]
 }

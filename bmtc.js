@@ -188,12 +188,30 @@ async function trackBus(routeQuery, targetStopName = null) {
     }
   }
 
+  // Collect route stops for mapping
+  const routeStops = [];
+  for (const dir of directions) {
+    if (routeData[dir] && Array.isArray(routeData[dir].data)) {
+      for (const s of routeData[dir].data) {
+        if (!routeStops.some(existing => existing.id === s.stationid)) {
+          routeStops.push({
+            id: s.stationid,
+            name: s.stationname,
+            lat: s.centerlat,
+            lon: s.centerlong,
+          });
+        }
+      }
+    }
+  }
+
   return {
     success: true,
     route: routeName,
     routeId: routeParentId,
     totalActiveBuses: allBuses.length,
     buses: allBuses,
+    routeStops,
   };
 }
 

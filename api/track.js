@@ -1,4 +1,5 @@
 const { trackBus } = require('../bmtc');
+const url = require('url');
 
 module.exports = async (req, res) => {
   // CORS
@@ -7,21 +8,33 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
-    res.status(204).end();
-    return;
+    if (res.status) return res.status(204).end();
+    res.writeHead(204);
+    return res.end();
   }
 
-  const { route, stop } = req.query;
+  // Parse query params whether run via Vercel serverless (req.query) or standard Node (req.url)
+  const parsed = url.parse(req.url, true);
+  const query = req.query || parsed.query || {};
+  const route = query.route;
+  const stop = query.stop || null;
+
+  const send = (code, obj) => {
+    if (typeof res.status === 'function') {
+      return res.status(code).json(obj);
+    }
+    res.writeHead(code, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(obj));
+  };
 
   if (!route) {
-    res.status(400).json({ success: false, message: 'Route parameter is required' });
-    return;
+    return send(400, { success: false, message: 'Route parameter is required (e.g. ?route=KIA-7A)' });
   }
 
   try {
-    const data = await trackBus(route, stop || null);
-    res.status(200).json(data);
+    const data = await trackBus(route, stop);
+    return send(200, data);
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    return send(500, { success: false, message: err.message });
   }
 };
