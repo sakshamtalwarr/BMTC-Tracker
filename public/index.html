@@ -5,8 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Namma BMTC Live Tracker</title>
   
-  <!-- Clean Vector Bus Favicon -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M8 6v6'/><path d='M15 6v6'/><path d='M2 12h19.6'/><path d='M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5c-.3-1-1.2-1.8-2.3-1.8H4.9c-1.1 0-2 .8-2.3 1.8l-1.4 5c-.1.4-.2.8-.2 1.2 0 .4.1.8.2 1.2.3 1.1.8 2.8.8 2.8h3'/><circle cx='7' cy='18' r='2'/><circle cx='17' cy='18' r='2'/></svg>">
+  <!-- PWA & Web App Meta Tags -->
+  <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#e0e0e0">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="BMTC Live">
+  <meta name="application-name" content="BMTC Live">
   
   <!-- Leaflet Map CSS & JS via Cloudflare CDN -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
@@ -67,15 +75,25 @@
     }
 
     .brand-icon-box {
-      width: 44px;
-      height: 44px;
+      width: 48px;
+      height: 48px;
       background: var(--bg);
-      border-radius: 14px;
+      border-radius: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
       box-shadow: var(--neu-raised-sm);
-      color: var(--accent-blue);
+      overflow: hidden;
+      padding: 2px;
+      flex-shrink: 0;
+    }
+
+    .brand-logo-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 14px;
+      display: block;
     }
 
     .brand-text h1 {
@@ -644,12 +662,7 @@
   <header>
     <div class="brand">
       <div class="brand-icon-box">
-        <!-- Modern Bus Vector SVG -->
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/>
-          <path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5c-.3-1-1.2-1.8-2.3-1.8H4.9c-1.1 0-2 .8-2.3 1.8l-1.4 5c-.1.4-.2.8-.2 1.2 0 .4.1.8.2 1.2.3 1.1.8 2.8.8 2.8h3"/>
-          <circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>
-        </svg>
+        <img src="/logo.png" alt="BMTC Live Logo" class="brand-logo-img">
       </div>
       <div class="brand-text">
         <h1>Namma BMTC</h1>
@@ -661,6 +674,14 @@
       <span>GPS ACTIVE</span>
     </div>
   </header>
+
+  <!-- PWA Install Banner (Triggered on mobile browsers) -->
+  <div id="installBanner" style="display: none; margin-bottom: 16px;">
+    <button class="primary-btn" id="installBtn" style="padding: 10px 14px; font-size: 0.84rem; gap: 10px;">
+      <img src="/favicon.png" width="22" height="22" style="border-radius: 6px;" alt="app icon">
+      <span>Install App to Home Screen</span>
+    </button>
+  </div>
 
   <!-- Controls Card -->
   <div class="neu-card">
@@ -1348,6 +1369,36 @@
         alert("Failed to call voice endpoint: " + e.message);
       }
     }
+
+    // PWA Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(err => {
+          console.warn('ServiceWorker registration error:', err);
+        });
+      });
+    }
+
+    // PWA Install Prompt Banner Handling
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const banner = document.getElementById('installBanner');
+      if (banner) banner.style.display = 'block';
+    });
+
+    document.getElementById('installBtn')?.addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          const banner = document.getElementById('installBanner');
+          if (banner) banner.style.display = 'none';
+        }
+        deferredPrompt = null;
+      }
+    });
 
     window.addEventListener('DOMContentLoaded', () => {
       updateAssistantUrl();
