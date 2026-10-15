@@ -4,22 +4,33 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Namma BMTC Live Tracker</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20%22100%22%20%22100%22><text y=%22.9em%22 font-size=%2290%22>🚌</text></svg>">
   
-  <!-- Leaflet Map CSS & JS via Cloudflare CDN (ultra fast & reliable) -->
+  <!-- Clean Vector Bus Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M8 6v6'/><path d='M15 6v6'/><path d='M2 12h19.6'/><path d='M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5c-.3-1-1.2-1.8-2.3-1.8H4.9c-1.1 0-2 .8-2.3 1.8l-1.4 5c-.1.4-.2.8-.2 1.2 0 .4.1.8.2 1.2.3 1.1.8 2.8.8 2.8h3'/><circle cx='7' cy='18' r='2'/><circle cx='17' cy='18' r='2'/></svg>">
+  
+  <!-- Leaflet Map CSS & JS via Cloudflare CDN -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 
   <style>
+    /* Neumorphism Design System (https://neumorphism.io/#e0e0e0) & Uiverse.io UI components */
     :root {
-      --bg: #0d1117;
-      --card-bg: #161b22;
-      --border: #30363d;
-      --accent: #238636;
-      --kia-accent: #1f6feb;
-      --text: #f0f6fc;
-      --text-muted: #8b949e;
-      --warning: #d29922;
+      --bg: #e0e0e0;
+      --card-bg: #e0e0e0;
+      --text: #2d3748;
+      --text-muted: #64748b;
+      --accent-blue: #2563eb;
+      --accent-green: #059669;
+      --accent-purple: #7c3aed;
+      --accent-amber: #d97706;
+
+      /* Neumorphic Shadow Tokens for #e0e0e0 */
+      --neu-raised: 8px 8px 16px #bebebe, -8px -8px 16px #ffffff;
+      --neu-raised-sm: 4px 4px 10px #bebebe, -4px -4px 10px #ffffff;
+      --neu-raised-hover: 10px 10px 20px #b8b8b8, -10px -10px 20px #ffffff;
+      --neu-inset: inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff;
+      --neu-inset-deep: inset 6px 6px 12px #bebebe, inset -6px -6px 12px #ffffff;
+      --neu-inset-sm: inset 2px 2px 5px #bebebe, inset -2px -2px 5px #ffffff;
     }
 
     * {
@@ -27,359 +38,580 @@
       margin: 0;
       padding: 0;
       -webkit-tap-highlight-color: transparent;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     }
 
     body {
       background-color: var(--bg);
       color: var(--text);
-      padding: 14px;
-      padding-bottom: 50px;
-      max-width: 600px;
+      padding: 16px;
+      padding-bottom: 60px;
+      max-width: 620px;
       margin: 0 auto;
+      min-height: 100vh;
     }
 
+    /* Header Bar */
     header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 14px;
+      margin-bottom: 20px;
+      padding: 6px 2px;
     }
 
-    .title {
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon-box {
+      width: 44px;
+      height: 44px;
+      background: var(--bg);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--neu-raised-sm);
+      color: var(--accent-blue);
+    }
+
+    .brand-text h1 {
       font-size: 1.25rem;
-      font-weight: 700;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      color: var(--text);
+    }
+
+    .brand-text span {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .live-status-pill {
       display: flex;
       align-items: center;
       gap: 8px;
+      background: var(--bg);
+      padding: 7px 14px;
+      border-radius: 20px;
+      box-shadow: var(--neu-inset-sm);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent-green);
     }
 
-    .live-badge {
-      font-size: 0.7rem;
-      font-weight: 600;
-      background: rgba(35, 134, 54, 0.2);
-      color: #3fb950;
-      border: 1px solid #238636;
-      padding: 3px 8px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .pulse {
-      width: 7px;
-      height: 7px;
-      background: #3fb950;
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--accent-green);
       border-radius: 50%;
-      animation: pulse 1.5s infinite;
+      box-shadow: 0 0 8px var(--accent-green);
+      animation: pulse 1.8s infinite;
     }
 
     @keyframes pulse {
       0% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(1.3); }
+      50% { opacity: 0.4; transform: scale(1.4); }
       100% { opacity: 1; transform: scale(1); }
     }
 
-    .input-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 14px;
-      margin-bottom: 14px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    /* Neumorphic Cards (Uiverse inspired) */
+    .neu-card {
+      background: var(--bg);
+      border-radius: 20px;
+      padding: 18px;
+      margin-bottom: 18px;
+      box-shadow: var(--neu-raised);
     }
 
-    .input-group {
+    .section-title {
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
       margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    label {
-      font-size: 0.72rem;
+    /* 1-Tap Commute Buttons */
+    .commute-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .commute-btn {
+      background: var(--bg);
+      border: none;
+      padding: 13px 14px;
+      border-radius: 16px;
+      box-shadow: var(--neu-raised-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-align: left;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .commute-btn:active {
+      box-shadow: var(--neu-inset);
+      transform: scale(0.98);
+    }
+
+    .commute-btn .icon-bubble {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: var(--neu-inset-sm);
+    }
+
+    .commute-btn.home .icon-bubble {
+      color: var(--accent-green);
+    }
+
+    .commute-btn.office .icon-bubble {
+      color: var(--accent-purple);
+    }
+
+    .commute-btn-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .commute-btn-desc {
+      font-size: 0.68rem;
       font-weight: 600;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Route Chips */
+    .chips-wrapper {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 4px 2px 12px;
+      scrollbar-width: none;
+    }
+    .chips-wrapper::-webkit-scrollbar { display: none; }
+
+    .chip {
+      background: var(--bg);
+      border: none;
+      color: var(--text-muted);
+      padding: 7px 14px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: var(--neu-raised-sm);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .chip:active, .chip.active {
+      box-shadow: var(--neu-inset);
+      color: var(--accent-blue);
+    }
+
+    .chip.green-active.active {
+      color: var(--accent-green);
+    }
+
+    .chip.purple-active.active {
+      color: var(--accent-purple);
+    }
+
+    /* Neumorphic Input Fields */
+    .input-field-wrap {
+      margin-bottom: 14px;
+    }
+
+    .input-field-wrap label {
+      font-size: 0.72rem;
+      font-weight: 700;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
       display: block;
-      margin-bottom: 5px;
+      margin-bottom: 6px;
     }
 
-    input {
-      width: 100%;
-      background: #0d1117;
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 11px 12px;
-      border-radius: 10px;
-      font-size: 0.95rem;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    input:focus {
-      border-color: var(--kia-accent);
-    }
-
-    .chips {
+    .input-inner-wrap {
+      position: relative;
       display: flex;
-      gap: 6px;
-      overflow-x: auto;
-      padding-bottom: 8px;
-      margin-bottom: 10px;
-      scrollbar-width: none;
-    }
-    .chips::-webkit-scrollbar { display: none; }
-
-    .chip {
-      background: #21262d;
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 5px 12px;
-      border-radius: 16px;
-      font-size: 0.8rem;
-      font-weight: 500;
-      cursor: pointer;
-      white-space: nowrap;
+      align-items: center;
     }
 
-    .chip.active {
-      background: var(--kia-accent);
-      border-color: var(--kia-accent);
+    .input-inner-wrap .field-icon {
+      position: absolute;
+      left: 14px;
+      color: var(--text-muted);
+      pointer-events: none;
+      display: flex;
     }
 
-    .track-btn {
+    .neu-input {
       width: 100%;
-      background: var(--kia-accent);
-      color: white;
+      background: var(--bg);
       border: none;
-      padding: 13px;
-      border-radius: 10px;
+      border-radius: 14px;
+      padding: 13px 14px 13px 42px;
+      color: var(--text);
       font-size: 0.95rem;
       font-weight: 600;
+      box-shadow: var(--neu-inset);
+      outline: none;
+      transition: box-shadow 0.2s ease;
+    }
+
+    .neu-input:focus {
+      box-shadow: inset 5px 5px 10px #b8b8b8, inset -5px -5px 10px #ffffff;
+    }
+
+    /* Uiverse Style Action Button */
+    .primary-btn {
+      width: 100%;
+      background: var(--bg);
+      color: var(--accent-blue);
+      border: none;
+      padding: 14px;
+      border-radius: 16px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      letter-spacing: 0.3px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
+      box-shadow: var(--neu-raised);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .track-btn:active {
-      opacity: 0.85;
+    .primary-btn:hover {
+      box-shadow: var(--neu-raised-hover);
+    }
+
+    .primary-btn:active {
+      box-shadow: var(--neu-inset);
+      transform: scale(0.99);
     }
 
     /* Live Map Container */
     #mapWrapper {
       position: relative;
-      margin-bottom: 14px;
-      border-radius: 14px;
-      overflow: hidden;
-      border: 1px solid var(--border);
+      margin-bottom: 20px;
+      border-radius: 24px;
+      background: var(--bg);
+      padding: 8px;
+      box-shadow: var(--neu-inset-deep);
     }
 
     #map {
-      height: 320px;
+      height: 330px;
       width: 100%;
-      background: #111;
+      border-radius: 18px;
+      background: #e2e8f0;
+      overflow: hidden;
     }
 
     .map-controls {
       position: absolute;
-      top: 10px;
-      right: 10px;
+      top: 18px;
+      right: 18px;
       z-index: 1000;
       display: flex;
-      gap: 6px;
+      gap: 8px;
     }
 
-    .map-btn-icon {
-      background: rgba(22, 27, 34, 0.9);
-      border: 1px solid var(--border);
+    .map-control-btn {
+      background: var(--bg);
+      border: none;
       color: var(--text);
-      padding: 6px 10px;
-      border-radius: 8px;
-      font-size: 0.75rem;
+      padding: 7px 12px;
+      border-radius: 12px;
+      font-size: 0.74rem;
+      font-weight: 700;
       cursor: pointer;
-      backdrop-filter: blur(4px);
+      box-shadow: var(--neu-raised-sm);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
     }
 
-    /* Custom Leaflet Marker */
+    .map-control-btn:active {
+      box-shadow: var(--neu-inset-sm);
+      transform: scale(0.96);
+    }
+
+    /* Custom Leaflet Vector Bus Marker */
     .bus-marker-container {
       position: relative;
       text-align: center;
     }
 
     .bus-marker-pin {
-      width: 34px;
-      height: 34px;
-      background: #1f6feb;
-      border: 2px solid white;
+      width: 38px;
+      height: 38px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 16px;
-      box-shadow: 0 0 12px rgba(31, 111, 235, 0.8);
+      color: #ffffff;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
       cursor: pointer;
+      border: 3px solid #ffffff;
+      margin: 0 auto;
     }
 
     .bus-marker-label {
-      background: rgba(13, 17, 23, 0.85);
-      border: 1px solid var(--border);
-      color: #fff;
+      background: var(--bg);
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+      color: var(--text);
       font-size: 10px;
-      font-weight: 700;
-      padding: 2px 5px;
-      border-radius: 4px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 6px;
       white-space: nowrap;
-      margin-top: 2px;
+      margin-top: 3px;
       display: inline-block;
     }
 
-    .stop-marker-pin {
-      width: 20px;
-      height: 20px;
-      background: #d29922;
-      border: 2px solid #fff;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px;
-    }
-
+    /* Results Header */
     .results-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin: 14px 4px 10px;
-      font-size: 0.85rem;
+      margin: 18px 4px 10px;
+      font-size: 0.88rem;
+      font-weight: 700;
       color: var(--text-muted);
     }
 
+    .active-badge {
+      background: var(--bg);
+      padding: 4px 12px;
+      border-radius: 16px;
+      box-shadow: var(--neu-inset-sm);
+      color: var(--accent-blue);
+      font-size: 0.75rem;
+      font-weight: 800;
+    }
+
+    /* Bus Cards */
     .bus-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px;
-      margin-bottom: 10px;
+      background: var(--bg);
+      border-radius: 20px;
+      padding: 16px;
+      margin-bottom: 16px;
       cursor: pointer;
-      transition: border-color 0.2s;
+      box-shadow: var(--neu-raised);
+      transition: all 0.25s ease;
     }
 
     .bus-card:hover {
-      border-color: var(--kia-accent);
+      box-shadow: var(--neu-raised-hover);
+      transform: translateY(-2px);
     }
 
     .bus-card-top {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
+    }
+
+    .bus-plate-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .bus-plate {
-      font-size: 1.1rem;
-      font-weight: 700;
+      font-size: 1.15rem;
+      font-weight: 800;
       letter-spacing: 0.5px;
+      color: var(--text);
     }
 
-    .bus-type {
-      font-size: 0.72rem;
+    .bus-type-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      background: var(--bg);
+      padding: 2px 8px;
+      border-radius: 10px;
+      box-shadow: var(--neu-inset-sm);
+    }
+
+    .eta-box {
+      background: var(--bg);
+      box-shadow: var(--neu-inset-sm);
+      padding: 6px 12px;
+      border-radius: 12px;
+      text-align: right;
+    }
+
+    .eta-time {
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: var(--accent-blue);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 5px;
+    }
+
+    .eta-dist {
+      font-size: 0.68rem;
+      font-weight: 600;
       color: var(--text-muted);
       margin-top: 1px;
     }
 
-    .eta-badge {
-      background: rgba(31, 111, 235, 0.15);
-      color: #58a6ff;
-      border: 1px solid #1f6feb;
-      padding: 5px 8px;
-      border-radius: 8px;
-      font-weight: 700;
-      font-size: 0.82rem;
-      text-align: right;
+    .direction-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 10px;
+      font-size: 0.74rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+      box-shadow: var(--neu-inset-sm);
     }
 
-    .direction-pill {
-      display: inline-block;
-      font-size: 0.72rem;
-      background: #21262d;
-      padding: 3px 8px;
-      border-radius: 6px;
-      color: #c9d1d9;
-      margin-bottom: 10px;
-      line-height: 1.3;
+    .direction-badge.airport {
+      color: var(--accent-green);
+    }
+
+    .direction-badge.hsr {
+      color: var(--accent-purple);
+    }
+
+    .direction-badge.general {
+      color: var(--accent-blue);
     }
 
     .location-box {
-      background: #0d1117;
-      border-radius: 8px;
-      padding: 8px 10px;
-      font-size: 0.82rem;
-      margin-bottom: 10px;
+      background: var(--bg);
+      box-shadow: var(--neu-inset);
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-size: 0.84rem;
+      margin-bottom: 12px;
     }
 
     .location-box .label {
       color: var(--text-muted);
       font-size: 0.68rem;
-      margin-bottom: 2px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 3px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .location-box .ping-time {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+      font-weight: 500;
     }
 
     .card-actions {
       display: flex;
-      gap: 8px;
+      gap: 10px;
     }
 
-    .map-btn {
+    .neu-action-btn {
       flex: 1;
       text-align: center;
-      background: #21262d;
-      border: 1px solid var(--border);
+      background: var(--bg);
+      border: none;
       color: var(--text);
       text-decoration: none;
-      padding: 8px;
-      border-radius: 8px;
-      font-size: 0.8rem;
-      font-weight: 600;
+      padding: 9px 12px;
+      border-radius: 12px;
+      font-size: 0.78rem;
+      font-weight: 700;
       cursor: pointer;
+      box-shadow: var(--neu-raised-sm);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
     }
 
-    /* Voice / Google Assistant Helper Card */
+    .neu-action-btn:active {
+      box-shadow: var(--neu-inset-sm);
+      transform: scale(0.97);
+    }
+
+    /* Assistant Card */
     .assistant-card {
-      background: #161b22;
-      border: 1px dashed #388bfd;
-      border-radius: 12px;
-      padding: 12px;
-      margin-top: 20px;
-      font-size: 0.85rem;
+      background: var(--bg);
+      border-radius: 20px;
+      padding: 18px;
+      margin-top: 24px;
+      box-shadow: var(--neu-raised);
     }
 
     .assistant-title {
-      font-weight: 700;
-      color: #58a6ff;
+      font-weight: 800;
+      color: var(--accent-blue);
       display: flex;
       align-items: center;
-      gap: 6px;
-      margin-bottom: 6px;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 0.92rem;
     }
 
     .code-box {
-      background: #0d1117;
-      border-radius: 6px;
-      padding: 8px;
-      font-family: monospace;
-      font-size: 0.75rem;
+      background: var(--bg);
+      box-shadow: var(--neu-inset);
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.74rem;
       word-break: break-all;
-      margin: 6px 0;
-      color: #7ee787;
+      margin: 10px 0;
+      color: #0284c7;
+      font-weight: 600;
     }
 
+    /* Loading Spinner */
     .spinner {
-      border: 3px solid rgba(255,255,255,0.1);
-      border-top: 3px solid white;
+      border: 3px solid rgba(37, 99, 235, 0.2);
+      border-top: 3px solid var(--accent-blue);
       border-radius: 50%;
-      width: 16px;
-      height: 16px;
+      width: 18px;
+      height: 18px;
       animation: spin 0.8s linear infinite;
     }
 
@@ -390,100 +622,216 @@
 
     .empty-state {
       text-align: center;
-      padding: 30px 16px;
+      padding: 36px 16px;
       color: var(--text-muted);
+      background: var(--bg);
+      border-radius: 20px;
+      box-shadow: var(--neu-inset);
+      margin: 10px 0;
+    }
+
+    .empty-icon {
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: center;
     }
   </style>
 </head>
 <body>
 
+  <!-- Header -->
   <header>
-    <div class="title">
-      <span>🚌</span> Namma BMTC Live
+    <div class="brand">
+      <div class="brand-icon-box">
+        <!-- Modern Bus Vector SVG -->
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/>
+          <path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5c-.3-1-1.2-1.8-2.3-1.8H4.9c-1.1 0-2 .8-2.3 1.8l-1.4 5c-.1.4-.2.8-.2 1.2 0 .4.1.8.2 1.2.3 1.1.8 2.8.8 2.8h3"/>
+          <circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1>Namma BMTC</h1>
+        <span>Live Telematics</span>
+      </div>
     </div>
-    <div class="live-badge">
-      <div class="pulse"></div> Live GPS
+    <div class="live-status-pill">
+      <div class="pulse-dot"></div>
+      <span>GPS ACTIVE</span>
     </div>
   </header>
 
-  <div class="input-card">
-    <div class="input-group">
-      <label>1-Tap Commute (KIA-7A)</label>
-      <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-        <button class="track-btn" style="background: #238636; flex: 1; padding: 10px; font-size: 0.85rem;" onclick="quickCommute('home')">
-          🏠 Go Home (Domlur ➜ Guttahalli)
-        </button>
-        <button class="track-btn" style="background: #8957e5; flex: 1; padding: 10px; font-size: 0.85rem;" onclick="quickCommute('office')">
-          🏢 Go to Office (Guttahalli ➜ Domlur)
-        </button>
+  <!-- Controls Card -->
+  <div class="neu-card">
+    <!-- 1-Tap Commute -->
+    <div class="section-title">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+      </svg>
+      <span>One-Tap Commute (KIA-7A)</span>
+    </div>
+
+    <div class="commute-grid">
+      <!-- Go Home Button -->
+      <button class="commute-btn home" onclick="quickCommute('home')">
+        <div class="icon-bubble">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+        </div>
+        <div>
+          <div class="commute-btn-title">Go Home</div>
+          <div class="commute-btn-desc">Domlur &rarr; Guttahalli</div>
+        </div>
+      </button>
+
+      <!-- Go to Office Button -->
+      <button class="commute-btn office" onclick="quickCommute('office')">
+        <div class="icon-bubble">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="20" height="14" x="2" y="7" rx="2" ry="2"/>
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+          </svg>
+        </div>
+        <div>
+          <div class="commute-btn-title">Go to Office</div>
+          <div class="commute-btn-desc">Guttahalli &rarr; Domlur</div>
+        </div>
+      </button>
+    </div>
+
+    <!-- Quick Route Chips -->
+    <div class="section-title">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+      </svg>
+      <span>Popular Routes</span>
+    </div>
+
+    <div class="chips-wrapper">
+      <button class="chip active" onclick="setRoute('KIA-7A')">KIA-7A</button>
+      <button class="chip" onclick="setRoute('500-D')">500-D</button>
+      <button class="chip" onclick="setRoute('KIA-8')">KIA-8</button>
+      <button class="chip" onclick="setRoute('335-E')">335-E</button>
+      <button class="chip" onclick="setRoute('MF-1')">MF-1</button>
+    </div>
+
+    <!-- Inputs -->
+    <div class="input-field-wrap">
+      <label>Bus Route Number</label>
+      <div class="input-inner-wrap">
+        <div class="field-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+          </svg>
+        </div>
+        <input type="text" id="routeInput" class="neu-input" placeholder="e.g. KIA-7A, 500-D" value="KIA-7A">
       </div>
     </div>
 
-    <div class="input-group">
-      <label>Quick Select Route</label>
-      <div class="chips">
-        <button class="chip active" onclick="setRoute('KIA-7A')">KIA-7A</button>
-        <button class="chip" onclick="setRoute('500-D')">500-D</button>
-        <button class="chip" onclick="setRoute('KIA-8')">KIA-8</button>
-        <button class="chip" onclick="setRoute('335-E')">335-E</button>
-        <button class="chip" onclick="setRoute('MF-1')">MF-1</button>
+    <div class="input-field-wrap">
+      <label>Boarding Stop (For Real-Time ETA)</label>
+      <div class="input-inner-wrap">
+        <div class="field-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+          </svg>
+        </div>
+        <input type="text" id="stopInput" class="neu-input" placeholder="e.g. Domlur, RM Guttahalli, Silk Board">
       </div>
-      <input type="text" id="routeInput" placeholder="Route (e.g. KIA-7A, 500-D)" value="KIA-7A">
     </div>
 
-    <div class="input-group">
-      <label>Your Bus Stand / Stop (For ETA)</label>
-      <input type="text" id="stopInput" placeholder="e.g. RM Guttahalli, Domlur, Silk Board">
-    </div>
-
-    <button class="track-btn" id="trackBtn" onclick="track()">
+    <button class="primary-btn" id="trackBtn" onclick="track()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/>
+      </svg>
       <span>Track Bus Live</span>
     </button>
   </div>
 
-  <!-- Live Map View -->
+  <!-- Neumorphic Map Frame -->
   <div id="mapWrapper">
     <div class="map-controls">
-      <button class="map-btn-icon" onclick="resetMapView()">Reset View</button>
-      <button class="map-btn-icon" id="toggleMapSize" onclick="toggleMapHeight()">Expand Map</button>
+      <button class="map-control-btn" onclick="resetMapView()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+        </svg>
+        <span>Reset</span>
+      </button>
+      <button class="map-control-btn" id="toggleMapSize" onclick="toggleMapHeight()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" x2="14" y1="3" y2="10"/><line x1="3" x2="10" y1="21" y2="14"/>
+        </svg>
+        <span>Expand</span>
+      </button>
     </div>
     <div id="map"></div>
   </div>
 
+  <!-- Direction Selector Tabs -->
+  <div id="directionFilterContainer" style="display: none; margin: 12px 2px 14px;">
+    <div class="section-title">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+      </svg>
+      <span>Select Travel Direction</span>
+    </div>
+    <div class="chips-wrapper" id="directionChipsContainer"></div>
+  </div>
+
+  <!-- Results Summary Header -->
   <div class="results-header" id="resultsHeader" style="display: none;">
     <span id="routeTitle">Route KIA-7A</span>
-    <span id="busCount">0 buses active</span>
+    <span class="active-badge" id="busCount">0 buses active</span>
   </div>
 
-  <!-- Direction Selector Tabs to eliminate confusion -->
-  <div id="directionFilterContainer" style="display: none; margin: 8px 0 12px;">
-    <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">
-      Filter by Travel Direction:
-    </div>
-    <div class="chips" id="directionChipsContainer"></div>
-  </div>
-
+  <!-- Bus Cards Output -->
   <div id="resultsList"></div>
 
   <!-- Google Assistant & Siri Voice Helper -->
   <div class="assistant-card">
     <div class="assistant-title">
-      <span>🎙️</span> Ask Google Assistant / Siri
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/>
+      </svg>
+      <span>Voice Integration (Google Assistant / Siri)</span>
     </div>
-    <p style="color: var(--text-muted); font-size: 0.78rem;">
-      You can ask Google Assistant or Siri by hitting the voice fulfillment endpoint:
+    <p style="color: var(--text-muted); font-size: 0.8rem; line-height: 1.4;">
+      Query real-time bus arrivals hands-free via Apple Siri Shortcuts or Google Assistant webhook:
     </p>
     <div class="code-box" id="assistantUrlBox">https://namma-bmtc-tracker.vercel.app/api/commute?to=home</div>
-    <button class="map-btn" style="margin-top: 6px; font-size: 0.75rem;" onclick="testVoiceSpeech()">
-      🔊 Test Voice Response Now
+    <button class="neu-action-btn" style="width: 100%; margin-top: 8px;" onclick="testVoiceSpeech()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+      </svg>
+      <span>Test Speech Synthesis Audio</span>
     </button>
   </div>
 
   <script>
+    // Pure Vector SVG Icons Library (No Basic Emojis)
+    const SVG_ICONS = {
+      bus: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5c-.3-1-1.2-1.8-2.3-1.8H4.9c-1.1 0-2 .8-2.3 1.8l-1.4 5c-.1.4-.2.8-.2 1.2 0 .4.1.8.2 1.2.3 1.1.8 2.8.8 2.8h3"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>`,
+      busPin: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5c-.3-1-1.2-1.8-2.3-1.8H4.9c-1.1 0-2 .8-2.3 1.8l-1.4 5c-.1.4-.2.8-.2 1.2 0 .4.1.8.2 1.2.3 1.1.8 2.8.8 2.8h3"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>`,
+      plane: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>`,
+      city: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v8h4"/><path d="M18 9h2a2 2 0 0 1 2 2v11h-4"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>`,
+      clock: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+      pin: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`,
+      map: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/></svg>`,
+      external: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>`,
+      refresh: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>`,
+      arrowRight: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>`,
+      info: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`
+    };
+
     let map = null;
     let markersLayer = null;
     let busMarkers = {};
-    let currentBuses = [];
+    let lastFetchedData = null;
+    let currentFilterDirection = 'ALL';
 
     function updateAssistantUrl() {
       const origin = window.location.origin || 'https://namma-bmtc-tracker.vercel.app';
@@ -492,8 +840,6 @@
         el.innerText = `${origin}/api/commute?to=home`;
       }
     }
-
-    let lastFetchedData = null;
 
     function initMap() {
       if (map) return;
@@ -505,11 +851,11 @@
         const mapEl = document.getElementById('map');
         if (!mapEl) return;
 
-        // Default center: Bengaluru
+        // Bengaluru coordinates
         map = L.map('map', { zoomControl: false }).setView([12.9716, 77.5946], 11);
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // 100% Free Open Source OpenStreetMap with parallel subdomains
+        // 100% Free OpenStreetMap with high-resolution subdomains
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
           subdomains: ['a', 'b', 'c'],
@@ -518,20 +864,16 @@
 
         markersLayer = L.layerGroup().addTo(map);
 
-        // Force Leaflet to recalculate container dimensions on mobile
-        setTimeout(() => map.invalidateSize(), 150);
-        setTimeout(() => map.invalidateSize(), 600);
+        setTimeout(() => map && map.invalidateSize(), 150);
+        setTimeout(() => map && map.invalidateSize(), 600);
 
-        // If data was already loaded before map was ready, render it now
         if (lastFetchedData) {
-          renderMap(lastFetchedData);
+          renderMap(lastFetchedData, currentFilterDirection);
         }
       } catch (e) {
         console.warn("Map init error:", e);
       }
     }
-
-    let currentFilterDirection = 'ALL';
 
     function matchesDirection(b, filterDest) {
       if (!filterDest || filterDest === 'ALL') return true;
@@ -581,18 +923,26 @@
       container.style.display = 'block';
       let chipsHtml = `
         <button class="chip ${currentFilterDirection === 'ALL' ? 'active' : ''}" data-dest="ALL" onclick="setDirectionFilter('ALL')">
-          🔄 All (${buses.length})
+          ${SVG_ICONS.refresh}
+          <span>All (${buses.length})</span>
         </button>
       `;
 
       destKeys.forEach(dest => {
         let label = dest;
+        let icon = SVG_ICONS.arrowRight;
+        let activeClass = '';
+
         if (dest.toLowerCase().includes('airport')) {
-          label = `✈️ Towards Airport (${destMap[dest]})`;
+          label = `Towards Airport (${destMap[dest]})`;
+          icon = SVG_ICONS.plane;
+          activeClass = 'green-active';
         } else if (dest.toLowerCase().includes('hsr')) {
-          label = `🏙️ Towards HSR (${destMap[dest]})`;
+          label = `Towards HSR (${destMap[dest]})`;
+          icon = SVG_ICONS.city;
+          activeClass = 'purple-active';
         } else {
-          label = `➜ ${dest.split(' ')[0]} (${destMap[dest]})`;
+          label = `${dest.split(' ')[0]} (${destMap[dest]})`;
         }
 
         const isActive = (currentFilterDirection === dest) ||
@@ -600,8 +950,9 @@
           (currentFilterDirection === 'HSR' && dest.toLowerCase().includes('hsr'));
 
         chipsHtml += `
-          <button class="chip ${isActive ? 'active' : ''}" data-dest="${dest}" onclick="setDirectionFilter('${dest}')">
-            ${label}
+          <button class="chip ${activeClass} ${isActive ? 'active' : ''}" data-dest="${dest}" onclick="setDirectionFilter('${dest}')">
+            ${icon}
+            <span>${label}</span>
           </button>
         `;
       });
@@ -616,11 +967,11 @@
         markersLayer.clearLayers();
         busMarkers = {};
 
-        // 1. Plot exact turn-by-turn road-snapped polyline
+        // 1. Plot exact turn-by-turn road polyline
         if (data.roadPolylines && data.roadPolylines.length > 0) {
           data.roadPolylines.forEach(coords => {
             L.polyline(coords, {
-              color: '#1f6feb',
+              color: '#2563eb',
               weight: 5,
               opacity: 0.9,
               lineJoin: 'round',
@@ -629,8 +980,8 @@
             }).addTo(markersLayer);
 
             L.polyline(coords, {
-              color: '#0d419d',
-              weight: 9,
+              color: '#1d4ed8',
+              weight: 8,
               opacity: 0.25,
               lineJoin: 'round',
               lineCap: 'round',
@@ -646,11 +997,11 @@
               L.circleMarker([s.lat, s.lon], {
                 radius: 4,
                 fillColor: '#ffffff',
-                color: '#1f6feb',
+                color: '#2563eb',
                 weight: 2,
                 opacity: 0.9,
                 fillOpacity: 1
-              }).bindPopup(`<b>🚏 ${s.name}</b>`).addTo(markersLayer);
+              }).bindPopup(`<b style="font-family: sans-serif; font-size: 12px; color: #1e293b;">${s.name}</b>`).addTo(markersLayer);
             }
           });
         }
@@ -663,24 +1014,28 @@
 
         busesToDraw.forEach(b => {
           const isAirport = b.destination.toLowerCase().includes('airport');
-          const pinColor = isAirport ? '#238636' : '#8957e5';
+          const pinColor = isAirport ? '#059669' : '#7c3aed';
+          
           const icon = L.divIcon({
             className: 'custom-bus-icon',
             html: `
               <div class="bus-marker-container">
-                <div class="bus-marker-pin" style="background: ${pinColor}; box-shadow: 0 0 10px ${pinColor};">🚌</div>
+                <div class="bus-marker-pin" style="background: ${pinColor};">
+                  ${SVG_ICONS.busPin}
+                </div>
                 <div class="bus-marker-label">${b.vehicleNumber.slice(-4)}</div>
               </div>
             `,
-            iconSize: [40, 50],
-            iconAnchor: [20, 25]
+            iconSize: [40, 52],
+            iconAnchor: [20, 26]
           });
 
           let popupHtml = `
-            <div style="font-family: sans-serif; min-width: 170px; color: #111;">
-              <b>🚌 ${b.vehicleNumber}</b> (${b.serviceType})<br/>
-              <div style="font-size: 11px; font-weight: bold; color: ${isAirport ? '#1a7f37' : '#6e40c9'}; margin: 3px 0;">
-                ${isAirport ? '✈️ Towards Airport' : '🏙️ Towards HSR Layout'}
+            <div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; min-width: 170px; color: #1e293b; padding: 2px;">
+              <div style="font-weight: 800; font-size: 13px;">${b.vehicleNumber}</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 1px;">${b.serviceType}</div>
+              <div style="font-size: 11px; font-weight: 700; color: ${isAirport ? '#059669' : '#7c3aed'}; margin: 4px 0;">
+                ${isAirport ? 'Towards Airport' : 'Towards HSR Layout'}
               </div>
               <div style="font-size: 12px; margin-top: 4px;">Near: <b>${b.currentLocation.nearestStop}</b></div>
           `;
@@ -688,13 +1043,13 @@
           if (b.targetStopAnalysis) {
             const t = b.targetStopAnalysis;
             if (t.hasPassed) {
-              popupHtml += `<div style="color: #b08800; font-weight: bold; margin-top: 4px;">Passed ${t.targetStop}</div>`;
+              popupHtml += `<div style="color: #d97706; font-weight: 700; font-size: 11px; margin-top: 4px;">Passed ${t.targetStop}</div>`;
             } else {
-              popupHtml += `<div style="color: #0969da; font-weight: bold; margin-top: 4px;">ETA: ~${t.estimatedMinutes}m (${t.distanceKm} km)</div>`;
+              popupHtml += `<div style="color: #2563eb; font-weight: 700; font-size: 11px; margin-top: 4px;">ETA: ~${t.estimatedMinutes}m (${t.distanceKm} km)</div>`;
             }
           }
 
-          popupHtml += `<div style="font-size: 10px; color: #888; margin-top: 4px;">Ping: ${b.lastUpdated}</div></div>`;
+          popupHtml += `<div style="font-size: 10px; color: #94a3b8; margin-top: 4px;">Updated: ${b.lastUpdated}</div></div>`;
 
           const marker = L.marker([b.coordinates.lat, b.coordinates.lon], { icon })
             .bindPopup(popupHtml)
@@ -714,8 +1069,8 @@
       if (!data.success || !data.buses || data.buses.length === 0) {
         list.innerHTML = `
           <div class="empty-state">
-            <div style="font-size: 2rem; margin-bottom: 8px;">⏳</div>
-            <p>No active GPS buses currently reported on route.</p>
+            <div class="empty-icon">${SVG_ICONS.info}</div>
+            <p style="font-weight: 600;">No active GPS buses currently reported on this route.</p>
           </div>
         `;
         return;
@@ -729,8 +1084,12 @@
       if (busesToShow.length === 0) {
         list.innerHTML = `
           <div class="empty-state">
-            <p>No active buses heading towards <b>${filterDest}</b> right now.</p>
-            <button class="chip" style="margin-top: 8px;" onclick="setDirectionFilter('ALL')">Show all directions</button>
+            <div class="empty-icon">${SVG_ICONS.info}</div>
+            <p style="font-weight: 600;">No active buses heading towards <b>${filterDest}</b> right now.</p>
+            <button class="chip" style="margin-top: 10px;" onclick="setDirectionFilter('ALL')">
+              ${SVG_ICONS.refresh}
+              <span>Show all directions</span>
+            </button>
           </div>
         `;
         return;
@@ -741,9 +1100,18 @@
         if (b.targetStopAnalysis) {
           const t = b.targetStopAnalysis;
           if (t.hasPassed) {
-            etaHtml = `<div class="eta-badge" style="border-color: #d29922; color: #d29922; background: rgba(210,153,34,0.1);">Passed stop</div>`;
+            etaHtml = `
+              <div class="eta-box" style="color: var(--accent-amber);">
+                <div class="eta-time" style="color: var(--accent-amber);">Passed stop</div>
+              </div>
+            `;
           } else {
-            etaHtml = `<div class="eta-badge">⏳ ~${t.estimatedMinutes} mins<div style="font-size: 0.7rem; font-weight: 500;">${t.distanceKm} km away</div></div>`;
+            etaHtml = `
+              <div class="eta-box">
+                <div class="eta-time">${SVG_ICONS.clock} ~${t.estimatedMinutes}m</div>
+                <div class="eta-dist">${t.distanceKm} km away</div>
+              </div>
+            `;
           }
         }
 
@@ -751,19 +1119,39 @@
         const isHsr = b.destination.toLowerCase().includes('hsr');
         let dirBanner = '';
         if (isAirport) {
-          dirBanner = `<div style="display:inline-flex; align-items:center; gap:4px; background: rgba(35, 134, 54, 0.15); color: #3fb950; border: 1px solid #238636; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; margin-bottom: 8px;">✈️ TOWARDS AIRPORT (Via RM Guttahalli)</div>`;
+          dirBanner = `
+            <div class="direction-badge airport">
+              ${SVG_ICONS.plane}
+              <span>Towards Airport (via RM Guttahalli)</span>
+            </div>
+          `;
         } else if (isHsr) {
-          dirBanner = `<div style="display:inline-flex; align-items:center; gap:4px; background: rgba(137, 87, 229, 0.15); color: #a371f7; border: 1px solid #8957e5; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; margin-bottom: 8px;">🏙️ TOWARDS HSR LAYOUT (Via Domlur)</div>`;
+          dirBanner = `
+            <div class="direction-badge hsr">
+              ${SVG_ICONS.city}
+              <span>Towards HSR Layout (via Domlur)</span>
+            </div>
+          `;
         } else {
-          dirBanner = `<div class="direction-pill">📍 ${b.direction}</div>`;
+          dirBanner = `
+            <div class="direction-badge general">
+              ${SVG_ICONS.arrowRight}
+              <span>${b.direction}</span>
+            </div>
+          `;
         }
 
         return `
           <div class="bus-card" onclick="focusBus('${b.vehicleNumber}')">
             <div class="bus-card-top">
               <div>
-                <div class="bus-plate">🚌 ${b.vehicleNumber}</div>
-                <div class="bus-type">${b.serviceType}</div>
+                <div class="bus-plate-row">
+                  <span style="color: var(--accent-blue); display: flex;">${SVG_ICONS.bus}</span>
+                  <span class="bus-plate">${b.vehicleNumber}</span>
+                </div>
+                <div style="margin-top: 4px;">
+                  <span class="bus-type-badge">${b.serviceType}</span>
+                </div>
               </div>
               ${etaHtml}
             </div>
@@ -771,17 +1159,24 @@
             <div>${dirBanner}</div>
 
             <div class="location-box">
-              <div class="label">CURRENT POSITION</div>
-              <div>Near <b>${b.currentLocation.nearestStop}</b> (~${b.currentLocation.distanceFromNearestStopKm} km)</div>
-              <div style="font-size: 0.72rem; color: #8b949e; margin-top: 4px;">Last ping: ${b.lastUpdated}</div>
+              <div class="label">
+                ${SVG_ICONS.pin}
+                <span>Current Location</span>
+              </div>
+              <div style="font-weight: 700; color: var(--text);">
+                Near ${b.currentLocation.nearestStop} (~${b.currentLocation.distanceFromNearestStopKm} km)
+              </div>
+              <div class="ping-time">Last telematics ping: ${b.lastUpdated}</div>
             </div>
 
             <div class="card-actions">
-              <button class="map-btn" onclick="event.stopPropagation(); focusBus('${b.vehicleNumber}')">
-                🗺️ Focus on Map
+              <button class="neu-action-btn" onclick="event.stopPropagation(); focusBus('${b.vehicleNumber}')">
+                ${SVG_ICONS.map}
+                <span>Focus on Map</span>
               </button>
-              <a class="map-btn" href="${b.googleMapsLink}" target="_blank" onclick="event.stopPropagation()">
-                📍 Google Maps
+              <a class="neu-action-btn" href="${b.googleMapsLink}" target="_blank" onclick="event.stopPropagation()">
+                ${SVG_ICONS.external}
+                <span>Google Maps</span>
               </a>
             </div>
           </div>
@@ -792,8 +1187,8 @@
     function setRoute(name) {
       document.getElementById('routeInput').value = name;
       currentFilterDirection = 'ALL';
-      document.querySelectorAll('.chip').forEach(c => {
-        c.classList.toggle('active', c.innerText === name);
+      document.querySelectorAll('.chips-wrapper .chip').forEach(c => {
+        c.classList.toggle('active', c.innerText.trim() === name);
       });
       document.getElementById('assistantUrlBox').innerText = 
         `${window.location.origin}/api/assistant?route=${encodeURIComponent(name)}`;
@@ -804,11 +1199,21 @@
       const mapEl = document.getElementById('map');
       const btn = document.getElementById('toggleMapSize');
       if (mapEl.style.height === '500px') {
-        mapEl.style.height = '320px';
-        btn.innerText = 'Expand Map';
+        mapEl.style.height = '330px';
+        btn.innerHTML = `
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" x2="14" y1="3" y2="10"/><line x1="3" x2="10" y1="21" y2="14"/>
+          </svg>
+          <span>Expand</span>
+        `;
       } else {
         mapEl.style.height = '500px';
-        btn.innerText = 'Shrink Map';
+        btn.innerHTML = `
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" x2="21" y1="10" y2="3"/><line x1="3" x2="10" y1="21" y2="14"/>
+          </svg>
+          <span>Shrink</span>
+        `;
       }
       setTimeout(() => map && map.invalidateSize(), 200);
     }
@@ -847,7 +1252,7 @@
       }
 
       btn.disabled = true;
-      btn.innerHTML = '<div class="spinner"></div> Finding Live Buses...';
+      btn.innerHTML = '<div class="spinner"></div><span>Locating Buses...</span>';
 
       try {
         let apiUrl = `/api/track?route=${encodeURIComponent(route)}`;
@@ -866,17 +1271,27 @@
         renderCards(data, currentFilterDirection);
 
       } catch (err) {
-        document.getElementById('resultsList').innerHTML = `<div class="empty-state">❌ Failed to fetch live data: ${err.message}</div>`;
+        document.getElementById('resultsList').innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">${SVG_ICONS.info}</div>
+            <p>Failed to fetch live telematics: ${err.message}</p>
+          </div>
+        `;
       } finally {
         btn.disabled = false;
-        btn.innerHTML = '<span>Track Bus Live</span>';
+        btn.innerHTML = `
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/>
+          </svg>
+          <span>Track Bus Live</span>
+        `;
       }
     }
 
     async function quickCommute(destination) {
       const btn = document.getElementById('trackBtn');
       btn.disabled = true;
-      btn.innerHTML = '<div class="spinner"></div> Checking Commute Bus...';
+      btn.innerHTML = '<div class="spinner"></div><span>Checking Commute...</span>';
 
       if (destination === 'home') {
         document.getElementById('routeInput').value = 'KIA-7A';
@@ -897,13 +1312,17 @@
           window.speechSynthesis.speak(utterance);
         }
 
-        // Run full track render
         await track();
       } catch (e) {
         alert("Failed to check commute: " + e.message);
       } finally {
         btn.disabled = false;
-        btn.innerHTML = '<span>Track Bus Live</span>';
+        btn.innerHTML = `
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/>
+          </svg>
+          <span>Track Bus Live</span>
+        `;
       }
     }
 
@@ -918,14 +1337,13 @@
         const json = await res.json();
         const speechText = json.speech || "No response received.";
 
-        // Speak aloud using Web Speech API (supported on Chrome & Safari iOS)
         if ('speechSynthesis' in window) {
           const utterance = new SpeechSynthesisUtterance(speechText);
           utterance.rate = 1.0;
           window.speechSynthesis.speak(utterance);
         }
 
-        alert(`🔊 Voice Response:\n\n"${speechText}"`);
+        alert(`Voice Fulfillment Response:\n\n"${speechText}"`);
       } catch (e) {
         alert("Failed to call voice endpoint: " + e.message);
       }
