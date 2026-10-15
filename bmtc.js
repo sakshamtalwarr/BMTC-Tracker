@@ -231,11 +231,56 @@ async function trackBus(routeQuery, targetStopName = null) {
     fetchLiveBuses(routeIds),
   ]);
 
+/**
+ * Decode Google/OSM encoded polyline string into [[lat, lng], ...]
+ */
+function decodePolyline(str, precision = 5) {
+  if (!str || typeof str !== 'string') return [];
+  let index = 0, lat = 0, lng = 0, coordinates = [];
+  const factor = Math.pow(10, precision);
+
+  while (index < str.length) {
+    let byte, shift = 0, result = 0;
+    do {
+      byte = str.charCodeAt(index++) - 63;
+      result |= (byte & 0x1f) << shift;
+      shift += 5;
+    } while (byte >= 0x20);
+
+    const deltaLat = ((result & 1) ? ~(result >> 1) : (result >> 1));
+    lat += deltaLat;
+
+    shift = 0;
+    result = 0;
+    do {
+      byte = str.charCodeAt(index++) - 63;
+      result |= (byte & 0x1f) << shift;
+      shift += 5;
+    } while (byte >= 0x20);
+
+    const deltaLng = ((result & 1) ? ~(result >> 1) : (result >> 1));
+    lng += deltaLng;
+
+    coordinates.push([lat / factor, lng / factor]);
+  }
+  return coordinates;
+}
+
   const routeDetailsMap = new Map();
   const allStops = [];
+  const roadPolylines = [];
 
   routeDetails.forEach((r) => {
     routeDetailsMap.set(r.routeId, r);
+
+    // Decode turn-by-turn road polyline from BMTC staticData
+    if (r.staticData?.polyline) {
+      const decoded = decodePolyline(r.staticData.polyline);
+      if (decoded.length > 0) {
+        roadPolylines.push(decoded);
+      }
+    }
+
     const stops = r.staticData?.stopSequenceWithDetails || [];
     stops.forEach((s) => {
       if (!allStops.some((existing) => existing.id === s.stop_id)) {
@@ -328,6 +373,7 @@ async function trackBus(routeQuery, targetStopName = null) {
     totalActiveBuses: allBuses.length,
     buses: allBuses,
     routeStops: allStops,
+    roadPolylines,
   };
 }
 

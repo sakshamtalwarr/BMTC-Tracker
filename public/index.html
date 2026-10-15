@@ -574,8 +574,30 @@
         busMarkers = {};
         currentBuses = data.buses || [];
 
-        // Plot route stops line if available
-        if (data.routeStops && data.routeStops.length > 0) {
+        // Plot exact turn-by-turn road-snapped polylines following real streets
+        if (data.roadPolylines && data.roadPolylines.length > 0) {
+          data.roadPolylines.forEach(coords => {
+            // Main road route path
+            L.polyline(coords, {
+              color: '#1f6feb',
+              weight: 5,
+              opacity: 0.9,
+              lineJoin: 'round',
+              lineCap: 'round',
+              smoothFactor: 1.0
+            }).addTo(markersLayer);
+
+            // Subtle outer glow to make the bus route stand out on roads
+            L.polyline(coords, {
+              color: '#0d419d',
+              weight: 9,
+              opacity: 0.25,
+              lineJoin: 'round',
+              lineCap: 'round',
+              smoothFactor: 1.0
+            }).addTo(markersLayer);
+          });
+        } else if (data.routeStops && data.routeStops.length > 0) {
           const latlngs = data.routeStops
             .filter(s => s.lat && s.lon)
             .map(s => [s.lat, s.lon]);
@@ -583,11 +605,26 @@
           if (latlngs.length > 1) {
             L.polyline(latlngs, {
               color: '#1f6feb',
-              weight: 3,
-              opacity: 0.6,
-              dashArray: '5, 8'
+              weight: 4,
+              opacity: 0.8
             }).addTo(markersLayer);
           }
+        }
+
+        // Plot bus stop dots along the route
+        if (data.routeStops && data.routeStops.length > 0) {
+          data.routeStops.forEach(s => {
+            if (s.lat && s.lon) {
+              L.circleMarker([s.lat, s.lon], {
+                radius: 4,
+                fillColor: '#ffffff',
+                color: '#1f6feb',
+                weight: 2,
+                opacity: 0.9,
+                fillOpacity: 1
+              }).bindPopup(`<b>🚏 ${s.name}</b>`).addTo(markersLayer);
+            }
+          });
         }
 
         if (!data.success || !data.buses || data.buses.length === 0) {
