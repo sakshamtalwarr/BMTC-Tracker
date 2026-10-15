@@ -12,8 +12,9 @@ module.exports = async (req, res) => {
     return res.end();
   }
 
-  const parsed = url.parse(req.url, true);
-  const query = req.query || parsed.query || {};
+  const host = req.headers?.host || 'localhost';
+  const parsed = new URL(req.url, `http://${host}`);
+  const query = req.query || Object.fromEntries(parsed.searchParams);
 
   // Support both GET query params and Dialogflow / Google Assistant POST body
   let route = query.route;

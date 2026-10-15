@@ -14,8 +14,9 @@ module.exports = async (req, res) => {
   }
 
   // Parse query params whether run via Vercel serverless (req.query) or standard Node (req.url)
-  const parsed = url.parse(req.url, true);
-  const query = req.query || parsed.query || {};
+  const host = req.headers?.host || 'localhost';
+  const parsed = new URL(req.url, `http://${host}`);
+  const query = req.query || Object.fromEntries(parsed.searchParams);
   const route = query.route;
   const stop = query.stop || null;
 

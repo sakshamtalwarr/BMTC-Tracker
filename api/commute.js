@@ -25,8 +25,9 @@ module.exports = async (req, res) => {
     return res.end();
   }
 
-  const parsed = url.parse(req.url, true);
-  const query = req.query || parsed.query || {};
+  const host = req.headers?.host || 'localhost';
+  const parsed = new URL(req.url, `http://${host}`);
+  const query = req.query || Object.fromEntries(parsed.searchParams);
 
   // 'home' or 'office'
   let destination = (query.to || query.destination || 'home').toLowerCase();

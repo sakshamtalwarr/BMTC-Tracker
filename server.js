@@ -11,7 +11,8 @@ const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
 
 const server = http.createServer(async (req, res) => {
-  const parsedUrl = url.parse(req.url, true);
+  const host = req.headers?.host || 'localhost';
+  const parsedUrl = new URL(req.url, `http://${host}`);
   let pathname = parsedUrl.pathname.replace(/\.js$/, ''); // Normalize .js extensions if any
 
   if (pathname === '/api/track') {
