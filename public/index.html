@@ -52,9 +52,9 @@
     body {
       background-color: var(--bg);
       color: var(--text);
-      padding: 12px;
-      padding-top: 78px;
-      padding-bottom: 96px;
+      padding: 14px;
+      padding-top: calc(96px + env(safe-area-inset-top, 0px));
+      padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px));
       max-width: 620px;
       margin: 0 auto;
       min-height: 100vh;
@@ -64,17 +64,17 @@
     /* Fixed Floating Header */
     header.floating-header {
       position: fixed;
-      top: 8px;
+      top: calc(10px + env(safe-area-inset-top, 0px));
       left: 50%;
       transform: translateX(-50%);
-      width: calc(100% - 20px);
+      width: calc(100% - 24px);
       max-width: 600px;
       z-index: 1000;
-      background: rgba(224, 224, 224, 0.88);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      background: rgba(224, 224, 224, 0.94);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       border-radius: 20px;
-      padding: 7px 12px;
+      padding: 8px 12px;
       box-shadow: 6px 6px 14px #bebebe, -6px -6px 14px #ffffff;
       display: flex;
       align-items: center;
@@ -941,13 +941,13 @@
     /* Bottom Floating Dock */
     .bottom-dock {
       position: fixed;
-      bottom: 12px;
+      bottom: calc(12px + env(safe-area-inset-bottom, 0px));
       left: 50%;
       transform: translateX(-50%);
-      width: calc(100% - 20px);
+      width: calc(100% - 24px);
       max-width: 480px;
       z-index: 1000;
-      background: rgba(224, 224, 224, 0.92);
+      background: rgba(224, 224, 224, 0.94);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border-radius: 26px;
@@ -1036,7 +1036,7 @@
       align-items: center;
       justify-content: center;
       gap: 6px;
-      margin: 0 auto 12px;
+      margin: 4px auto 16px;
     }
 
     .swipe-dot {
