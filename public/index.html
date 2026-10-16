@@ -52,20 +52,40 @@
     body {
       background-color: var(--bg);
       color: var(--text);
-      padding: 16px;
-      padding-bottom: 60px;
+      padding: 12px;
+      padding-top: 78px;
+      padding-bottom: 96px;
       max-width: 620px;
       margin: 0 auto;
       min-height: 100vh;
+      overflow-x: hidden;
     }
 
-    /* Header Bar */
-    header {
+    /* Fixed Floating Header */
+    header.floating-header {
+      position: fixed;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 20px);
+      max-width: 600px;
+      z-index: 1000;
+      background: rgba(224, 224, 224, 0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-radius: 20px;
+      padding: 7px 12px;
+      box-shadow: 6px 6px 14px #bebebe, -6px -6px 14px #ffffff;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 20px;
-      padding: 6px 2px;
+      transition: all 0.25s ease;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 7px;
     }
 
     .brand {
@@ -918,42 +938,122 @@
       transform: scale(0.96);
     }
 
-    /* Neu Navigation Switcher */
-    .neu-nav-tabs {
+    /* Bottom Floating Dock */
+    .bottom-dock {
+      position: fixed;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 20px);
+      max-width: 480px;
+      z-index: 1000;
+      background: rgba(224, 224, 224, 0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 26px;
+      padding: 5px 8px;
+      padding-bottom: calc(5px + env(safe-area-inset-bottom, 0px));
+      box-shadow: 8px 8px 18px #bebebe, -8px -8px 18px #ffffff;
       display: flex;
-      background: var(--bg);
-      box-shadow: var(--neu-inset);
-      padding: 6px;
-      border-radius: 18px;
-      margin-bottom: 16px;
-      gap: 6px;
+      justify-content: space-around;
+      align-items: center;
+      gap: 4px;
     }
 
-    .neu-tab-btn {
+    .dock-item {
       flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
       background: transparent;
       border: none;
-      padding: 10px 12px;
-      border-radius: 14px;
-      font-size: 0.82rem;
-      font-weight: 800;
-      color: var(--text-muted);
+      border-radius: 18px;
+      padding: 6px 4px;
       cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+    }
+
+    .dock-item .dock-icon {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 32px;
+      height: 32px;
+      border-radius: 12px;
+      transition: all 0.2s ease;
+      color: var(--text-muted);
     }
 
-    .neu-tab-btn.active {
-      background: var(--bg);
+    .dock-item .dock-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      line-height: 1;
+    }
+
+    .dock-item.active {
       color: var(--accent-blue);
-      box-shadow: var(--neu-raised-sm);
     }
 
-    .neu-tab-btn:hover:not(.active) {
-      color: var(--text);
+    .dock-item.active .dock-icon {
+      background: var(--bg);
+      box-shadow: var(--neu-inset-sm);
+      color: var(--accent-blue);
+      transform: translateY(-2px);
+    }
+
+    /* Swipeable Tabs Carousel Viewport */
+    .tabs-viewport {
+      width: 100%;
+      overflow: hidden;
+      position: relative;
+      touch-action: pan-y;
+      min-height: calc(100vh - 180px);
+    }
+
+    .tabs-slider {
+      display: flex;
+      width: 400%;
+      transition: transform 0.32s cubic-bezier(0.25, 1, 0.5, 1);
+      will-change: transform;
+    }
+
+    .tab-panel {
+      width: 25%;
+      min-width: 25%;
+      flex-shrink: 0;
+      padding: 0 2px;
+      box-sizing: border-box;
+    }
+
+    /* Swipe Navigation Indicator */
+    .swipe-indicator-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin: 0 auto 12px;
+    }
+
+    .swipe-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--bg);
+      box-shadow: var(--neu-inset-sm);
+      transition: all 0.25s ease;
+      cursor: pointer;
+    }
+
+    .swipe-dot.active {
+      width: 22px;
+      border-radius: 10px;
+      background: var(--accent-blue);
+      box-shadow: 0 0 8px rgba(37, 99, 235, 0.4);
     }
 
     /* Swap Button */
@@ -1104,8 +1204,8 @@
     </div>
   </div>
 
-  <!-- Header -->
-  <header>
+  <!-- Fixed Floating Header -->
+  <header class="floating-header">
     <div class="brand" onclick="openSplashScreen()" style="cursor: pointer;" title="About Namma BMTC Live">
       <div class="brand-icon-box">
         <img src="/logo.png" alt="BMTC Live Logo" class="brand-logo-img">
@@ -1115,9 +1215,15 @@
         <span>Live Telematics</span>
       </div>
     </div>
-    <div style="display: flex; align-items: center; gap: 8px;">
+    <div class="header-actions">
+      <!-- Active Tab Indicator Badge -->
+      <div class="live-status-pill">
+        <div class="pulse-dot"></div>
+        <span id="headerTabBadge">RADAR</span>
+      </div>
+
       <!-- Destination Wake-Up Alarm Button -->
-      <button class="coffee-icon-btn" id="alarmHeaderBtn" onclick="openAlarmConfigModal()" title="Destination Wake-Up Alarm" aria-label="Destination Wake-Up Alarm">
+      <button class="coffee-icon-btn" id="alarmHeaderBtn" onclick="switchTab(3)" title="Destination Wake-Up Alarm" aria-label="Destination Wake-Up Alarm">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
         </svg>
@@ -1131,281 +1237,422 @@
           <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/>
         </svg>
       </button>
-
-      <div class="live-status-pill">
-        <div class="pulse-dot"></div>
-        <span>GPS ACTIVE</span>
-      </div>
     </div>
   </header>
 
   <!-- PWA Install Banner (Triggered on mobile browsers) -->
-  <div id="installBanner" style="display: none; margin-bottom: 16px;">
+  <div id="installBanner" style="display: none; margin-bottom: 12px;">
     <button class="primary-btn" id="installBtn" style="padding: 10px 14px; font-size: 0.84rem; gap: 10px;">
       <img src="/favicon.png" width="22" height="22" style="border-radius: 6px;" alt="app icon">
       <span>Install App to Home Screen</span>
     </button>
   </div>
 
-  <!-- Navigation Switcher Tabs -->
-  <div class="neu-nav-tabs">
-    <button class="neu-tab-btn active" id="tabRadarBtn" onclick="switchMainTab('radar')">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/>
-      </svg>
-      <span>Live Radar</span>
-    </button>
-    <button class="neu-tab-btn" id="tabPlannerBtn" onclick="switchMainTab('planner')">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M12 19h4.5a3.5 3.5 0 0 0 0-7h-9a3.5 3.5 0 0 1 0-7H12"/>
-      </svg>
-      <span>Bus Finder (A ➔ B)</span>
-    </button>
+  <!-- Swipe Progress Dot Indicators -->
+  <div class="swipe-indicator-bar" id="swipeIndicatorBar">
+    <div class="swipe-dot active" id="swipeDot0" onclick="switchTab(0)" title="Tab 1: Radar"></div>
+    <div class="swipe-dot" id="swipeDot1" onclick="switchTab(1)" title="Tab 2: Commute"></div>
+    <div class="swipe-dot" id="swipeDot2" onclick="switchTab(2)" title="Tab 3: Finder"></div>
+    <div class="swipe-dot" id="swipeDot3" onclick="switchTab(3)" title="Tab 4: Alarm & Settings"></div>
   </div>
 
-  <!-- Live Radar Main Section -->
-  <div id="radarSection">
-  <!-- Controls Card -->
-  <div class="neu-card">
-    <!-- 1-Tap Commute -->
-    <div class="section-title">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-      </svg>
-      <span>One-Tap Commute (KIA-7A)</span>
-    </div>
+  <!-- Swipeable Tabs Viewport -->
+  <div class="tabs-viewport" id="tabsViewport">
+    <div class="tabs-slider" id="tabsSlider">
 
-    <div class="commute-grid">
-      <!-- Go Home Button -->
-      <button class="commute-btn home" onclick="quickCommute('home')">
-        <div class="icon-bubble">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-            <polyline points="9 22 9 12 15 12 15 22"/>
-          </svg>
-        </div>
-        <div>
-          <div class="commute-btn-title">Go Home</div>
-          <div class="commute-btn-desc">Domlur &rarr; Guttahalli</div>
-        </div>
-      </button>
-
-      <!-- Go to Office Button -->
-      <button class="commute-btn office" onclick="quickCommute('office')">
-        <div class="icon-bubble">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect width="20" height="14" x="2" y="7" rx="2" ry="2"/>
-            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
-          </svg>
-        </div>
-        <div>
-          <div class="commute-btn-title">Go to Office</div>
-          <div class="commute-btn-desc">Guttahalli &rarr; Domlur</div>
-        </div>
-      </button>
-    </div>
-
-    <!-- Quick Route Chips -->
-    <div class="section-title">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-      </svg>
-      <span>Popular Routes</span>
-    </div>
-
-    <div class="chips-wrapper">
-      <button class="chip active" onclick="setRoute('KIA-7A')">KIA-7A</button>
-      <button class="chip" onclick="setRoute('500-D')">500-D</button>
-      <button class="chip" onclick="setRoute('KIA-8')">KIA-8</button>
-      <button class="chip" onclick="setRoute('335-E')">335-E</button>
-      <button class="chip" onclick="setRoute('MF-1')">MF-1</button>
-    </div>
-
-    <!-- Inputs -->
-    <div class="input-field-wrap">
-      <label>Bus Route Number</label>
-      <div class="input-inner-wrap">
-        <div class="field-icon">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-          </svg>
-        </div>
-        <input type="text" id="routeInput" class="neu-input" placeholder="e.g. KIA-7A, 500-D" value="KIA-7A">
-      </div>
-    </div>
-
-    <div class="input-field-wrap">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-        <label style="margin-bottom: 0;">Boarding Stop (For Real-Time ETA)</label>
-        <button type="button" class="near-me-btn" onclick="locateNearestBusStop()" title="Detect nearest BMTC stop via GPS">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="3 11 22 2 13 21 11 13 3 11"/>
-          </svg>
-          <span id="nearMeBtnLabel">Near Me (GPS)</span>
-        </button>
-      </div>
-      <div class="input-inner-wrap">
-        <div class="field-icon">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
-          </svg>
-        </div>
-        <input type="text" id="stopInput" class="neu-input" placeholder="e.g. Domlur, RM Guttahalli, Silk Board">
-      </div>
-      <!-- Nearest Stop GPS Banner -->
-      <div id="nearestStopBanner" style="display: none; margin-top: 8px;"></div>
-    </div>
-
-    <button class="primary-btn" id="trackBtn" onclick="track()">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/>
-      </svg>
-      <span>Track Bus Live</span>
-    </button>
-  </div>
-
-  <!-- Neumorphic Map Frame -->
-  <div id="mapWrapper">
-    <div class="map-controls">
-      <button class="map-control-btn" onclick="resetMapView()">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
-        </svg>
-        <span>Reset</span>
-      </button>
-      <button class="map-control-btn" id="toggleMapSize" onclick="toggleMapHeight()">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" x2="14" y1="3" y2="10"/><line x1="3" x2="10" y1="21" y2="14"/>
-        </svg>
-        <span>Expand</span>
-      </button>
-    </div>
-    <div id="map"></div>
-  </div>
-
-  <!-- Direction Selector Tabs -->
-  <div id="directionFilterContainer" style="display: none; margin: 12px 2px 14px;">
-    <div class="section-title">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-      </svg>
-      <span>Select Travel Direction</span>
-    </div>
-    <div class="chips-wrapper" id="directionChipsContainer"></div>
-  </div>
-
-  <!-- Results Summary Header -->
-  <div class="results-header" id="resultsHeader" style="display: none;">
-    <span id="routeTitle">Route KIA-7A</span>
-    <span class="active-badge" id="busCount">0 buses active</span>
-  </div>
-
-  <!-- Bus Cards Output -->
-  <div id="resultsList"></div>
-
-  <!-- Google Assistant & Siri Voice Helper -->
-  <div class="assistant-card">
-    <div class="assistant-title">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
-        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/>
-      </svg>
-      <span>Voice Integration (Google Assistant / Siri)</span>
-    </div>
-    <p style="color: var(--text-muted); font-size: 0.8rem; line-height: 1.4;">
-      Query real-time bus arrivals hands-free via Apple Siri Shortcuts or Google Assistant webhook:
-    </p>
-    <div class="code-box" id="assistantUrlBox">https://namma-bmtc-tracker.vercel.app/api/commute?to=home</div>
-    <button class="neu-action-btn" style="width: 100%; margin-top: 8px;" onclick="testVoiceSpeech()">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
-      </svg>
-      <span>Test Speech Synthesis Audio</span>
-    </button>
-  </div>
-  </div> <!-- /#radarSection -->
-
-  <!-- Bus Finder (Point A ➔ Point B) Section -->
-  <div id="plannerSection" style="display: none;">
-    <div class="neu-card">
-      <div class="section-title">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M12 19h4.5a3.5 3.5 0 0 0 0-7h-9a3.5 3.5 0 0 1 0-7H12"/>
-        </svg>
-        <span>Plan Journey (Point A ➔ Point B)</span>
-      </div>
-
-      <!-- Quick Route Shortcut Chips -->
-      <div class="chips-wrapper" style="margin-bottom: 8px;">
-        <button class="chip" onclick="setPlannerRoute('Domlur', 'Majestic')">Domlur &rarr; Majestic</button>
-        <button class="chip" onclick="setPlannerRoute('HSR Layout', 'Airport')">HSR &rarr; Airport</button>
-        <button class="chip" onclick="setPlannerRoute('Central Silk Board', 'Hebbal')">Silk Board &rarr; Hebbal</button>
-        <button class="chip" onclick="setPlannerRoute('Electronic City', 'Silk Board')">E-City &rarr; Silk Board</button>
-        <button class="chip" onclick="setPlannerRoute('Majestic', 'Whitefield')">Majestic &rarr; Whitefield</button>
-      </div>
-
-      <!-- Origin (Point A) -->
-      <div class="input-field-wrap">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-          <label style="margin-bottom: 0;">Origin / Starting Stop (Point A)</label>
-          <button type="button" class="near-me-btn" onclick="fillPlannerOriginWithGps()" title="Use my current GPS bus stop">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+      <!-- ================= TAB 0: LIVE RADAR & MAP ================= -->
+      <div class="tab-panel active" id="panel0">
+        <div class="neu-card">
+          <!-- Quick Route Chips -->
+          <div class="section-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
             </svg>
-            <span id="plannerNearMeLabel">Near Me (GPS)</span>
+            <span>Popular Routes</span>
+          </div>
+
+          <div class="chips-wrapper">
+            <button class="chip active" onclick="setRoute('KIA-7A')">KIA-7A</button>
+            <button class="chip" onclick="setRoute('500-D')">500-D</button>
+            <button class="chip" onclick="setRoute('KIA-8')">KIA-8</button>
+            <button class="chip" onclick="setRoute('335-E')">335-E</button>
+            <button class="chip" onclick="setRoute('MF-1')">MF-1</button>
+          </div>
+
+          <!-- Inputs -->
+          <div class="input-field-wrap">
+            <label>Bus Route Number</label>
+            <div class="input-inner-wrap">
+              <div class="field-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                </svg>
+              </div>
+              <input type="text" id="routeInput" class="neu-input" placeholder="e.g. KIA-7A, 500-D" value="KIA-7A">
+            </div>
+          </div>
+
+          <div class="input-field-wrap">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label style="margin-bottom: 0;">Boarding Stop (For Real-Time ETA)</label>
+              <button type="button" class="near-me-btn" onclick="locateNearestBusStop()" title="Detect nearest BMTC stop via GPS">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+                </svg>
+                <span id="nearMeBtnLabel">Near Me (GPS)</span>
+              </button>
+            </div>
+            <div class="input-inner-wrap">
+              <div class="field-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+                </svg>
+              </div>
+              <input type="text" id="stopInput" class="neu-input" placeholder="e.g. Domlur, RM Guttahalli, Silk Board">
+            </div>
+            <!-- Nearest Stop GPS Banner -->
+            <div id="nearestStopBanner" style="display: none; margin-top: 8px;"></div>
+          </div>
+
+          <button class="primary-btn" id="trackBtn" onclick="track()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/>
+            </svg>
+            <span>Track Bus Live</span>
           </button>
         </div>
-        <div class="input-inner-wrap">
-          <div class="field-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/>
-            </svg>
+
+        <!-- Neumorphic Map Frame -->
+        <div id="mapWrapper">
+          <div class="map-controls">
+            <button class="map-control-btn" onclick="resetMapView()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+              </svg>
+              <span>Reset</span>
+            </button>
+            <button class="map-control-btn" id="toggleMapSize" onclick="toggleMapHeight()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" x2="14" y1="3" y2="10"/><line x1="3" x2="10" y1="21" y2="14"/>
+              </svg>
+              <span>Expand</span>
+            </button>
           </div>
-          <input type="text" id="plannerFromInput" class="neu-input" placeholder="e.g. Domlur, Central Silk Board, HSR">
+          <div id="map"></div>
+        </div>
+
+        <!-- Direction Selector Tabs -->
+        <div id="directionFilterContainer" style="display: none; margin: 12px 2px 14px;">
+          <div class="section-title">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+            </svg>
+            <span>Select Travel Direction</span>
+          </div>
+          <div class="chips-wrapper" id="directionChipsContainer"></div>
+        </div>
+
+        <!-- Results Summary Header -->
+        <div class="results-header" id="resultsHeader" style="display: none;">
+          <span id="routeTitle">Route KIA-7A</span>
+          <span class="active-badge" id="busCount">0 buses active</span>
+        </div>
+
+        <!-- Bus Cards Output -->
+        <div id="resultsList"></div>
+      </div>
+
+      <!-- ================= TAB 1: 1-TAP COMMUTE & ASSISTANT ================= -->
+      <div class="tab-panel" id="panel1">
+        <div class="neu-card">
+          <div class="section-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+            <span>1-Tap Fast Commute (KIA-7A)</span>
+          </div>
+
+          <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 14px;">
+            Direction-isolated live tracking between Murugeshpalya/Domlur and RM Guttahalli.
+          </p>
+
+          <div class="commute-grid">
+            <!-- Go Home Button -->
+            <button class="commute-btn home" onclick="quickCommute('home')">
+              <div class="icon-bubble">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                  <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+              </div>
+              <div>
+                <div class="commute-btn-title">Go Home</div>
+                <div class="commute-btn-desc">Domlur &rarr; Guttahalli</div>
+              </div>
+            </button>
+
+            <!-- Go to Office Button -->
+            <button class="commute-btn office" onclick="quickCommute('office')">
+              <div class="icon-bubble">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="20" height="14" x="2" y="7" rx="2" ry="2"/>
+                  <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                </svg>
+              </div>
+              <div>
+                <div class="commute-btn-title">Go to Office</div>
+                <div class="commute-btn-desc">Guttahalli &rarr; Domlur</div>
+              </div>
+            </button>
+          </div>
+
+          <!-- Quick Action to Find Nearest Bus Stop -->
+          <button class="neu-action-btn" style="width: 100%; margin-top: 4px;" onclick="locateNearestBusStop(); switchTab(0);">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+            </svg>
+            <span>Detect Nearest Bus Stand via GPS (View on Radar)</span>
+          </button>
+        </div>
+
+        <!-- Google Assistant & Siri Voice Helper -->
+        <div class="assistant-card">
+          <div class="assistant-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/>
+            </svg>
+            <span>Voice Integration (Assistant & Siri)</span>
+          </div>
+          <p style="color: var(--text-muted); font-size: 0.8rem; line-height: 1.4;">
+            Query real-time bus arrivals hands-free via Apple Siri Shortcuts or Google Assistant webhook:
+          </p>
+          <div class="code-box" id="assistantUrlBox">https://namma-bmtc-tracker.vercel.app/api/commute?to=home</div>
+          <button class="neu-action-btn" style="width: 100%; margin-top: 8px;" onclick="testVoiceSpeech()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+            </svg>
+            <span>Test Speech Synthesis Audio</span>
+          </button>
         </div>
       </div>
 
-      <!-- Swap Origin & Destination Button -->
-      <button class="swap-btn" onclick="swapOriginDest()" title="Swap Origin and Destination" aria-label="Swap Origin and Destination">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M7 16V4M7 4L3 8M7 4L11 8M17 8V20M17 20L21 16M17 20L13 16"/>
-        </svg>
-      </button>
-
-      <!-- Destination (Point B) -->
-      <div class="input-field-wrap">
-        <label>Destination Stop (Point B)</label>
-        <div class="input-inner-wrap">
-          <div class="field-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+      <!-- ================= TAB 2: POINT A TO POINT B FINDER ================= -->
+      <div class="tab-panel" id="panel2">
+        <div class="neu-card">
+          <div class="section-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M12 19h4.5a3.5 3.5 0 0 0 0-7h-9a3.5 3.5 0 0 1 0-7H12"/>
             </svg>
+            <span>Route Finder & Transfer Planner</span>
           </div>
-          <input type="text" id="plannerToInput" class="neu-input" placeholder="e.g. Majestic, Airport, Hebbal, Whitefield">
+
+          <!-- Quick Route Shortcut Chips -->
+          <div class="chips-wrapper" style="margin-bottom: 8px;">
+            <button class="chip" onclick="setPlannerRoute('Domlur', 'Majestic')">Domlur &rarr; Majestic</button>
+            <button class="chip" onclick="setPlannerRoute('HSR Layout', 'Airport')">HSR &rarr; Airport</button>
+            <button class="chip" onclick="setPlannerRoute('Central Silk Board', 'Hebbal')">Silk Board &rarr; Hebbal</button>
+            <button class="chip" onclick="setPlannerRoute('Electronic City', 'Silk Board')">E-City &rarr; Silk Board</button>
+            <button class="chip" onclick="setPlannerRoute('Majestic', 'Whitefield')">Majestic &rarr; Whitefield</button>
+          </div>
+
+          <!-- Origin (Point A) -->
+          <div class="input-field-wrap">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label style="margin-bottom: 0;">Origin / Starting Stop (Point A)</label>
+              <button type="button" class="near-me-btn" onclick="fillPlannerOriginWithGps()" title="Use my current GPS bus stop">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+                </svg>
+                <span id="plannerNearMeLabel">Near Me (GPS)</span>
+              </button>
+            </div>
+            <div class="input-inner-wrap">
+              <div class="field-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+              </div>
+              <input type="text" id="plannerFromInput" class="neu-input" placeholder="e.g. Domlur, Central Silk Board, HSR">
+            </div>
+          </div>
+
+          <!-- Swap Origin & Destination Button -->
+          <button class="swap-btn" onclick="swapOriginDest()" title="Swap Origin and Destination" aria-label="Swap Origin and Destination">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M7 16V4M7 4L3 8M7 4L11 8M17 8V20M17 20L21 16M17 20L13 16"/>
+            </svg>
+          </button>
+
+          <!-- Destination (Point B) -->
+          <div class="input-field-wrap">
+            <label>Destination Stop (Point B)</label>
+            <div class="input-inner-wrap">
+              <div class="field-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+                </svg>
+              </div>
+              <input type="text" id="plannerToInput" class="neu-input" placeholder="e.g. Majestic, Airport, Hebbal, Whitefield">
+            </div>
+          </div>
+
+          <button class="primary-btn" id="findBusesBtn" onclick="searchBusRoutePlan()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+            </svg>
+            <span>Find Buses & Connecting Routes</span>
+          </button>
+        </div>
+
+        <!-- Planner Results Container -->
+        <div id="plannerResultsArea" style="margin-top: 14px;"></div>
+      </div>
+
+      <!-- ================= TAB 3: WAKE-UP ALARM & SETTINGS ================= -->
+      <div class="tab-panel" id="panel3">
+        <!-- Alarm Config Card -->
+        <div class="neu-card">
+          <div class="section-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            <span>Destination Wake-Up Alarm</span>
+          </div>
+
+          <p style="font-size: 0.82rem; color: var(--text); line-height: 1.4; margin-bottom: 12px;">
+            Set an audible alarm and voice alert so you never miss your bus stop again.
+          </p>
+
+          <div class="input-field-wrap">
+            <label>Destination Bus Stand</label>
+            <div class="input-inner-wrap">
+              <div class="field-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+                </svg>
+              </div>
+              <input type="text" id="tabAlarmDestinationInput" class="neu-input" placeholder="e.g. Domlur, RM Guttahalli, Silk Board">
+            </div>
+          </div>
+
+          <div style="margin-bottom: 14px;">
+            <label style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Alert Distance</label>
+            <div class="chips-wrapper" style="padding-bottom: 4px;">
+              <button class="chip active" data-radius="1.0" onclick="selectAlarmRadius(this, 1.0)">1.0 km (~5 min)</button>
+              <button class="chip" data-radius="0.5" onclick="selectAlarmRadius(this, 0.5)">500m (~2 min)</button>
+              <button class="chip" data-radius="2.0" onclick="selectAlarmRadius(this, 2.0)">2.0 km (~10 min)</button>
+            </div>
+          </div>
+
+          <!-- Active Alarm Status Banner -->
+          <div id="tabAlarmStatusBanner" style="display: none; margin-bottom: 14px; padding: 12px; border-radius: 14px; background: var(--bg); box-shadow: var(--neu-inset-sm);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-size: 0.74rem; font-weight: 800; color: var(--accent-amber); display: flex; align-items: center; gap: 6px;">
+                  <span class="pulse-dot" style="background: var(--accent-amber); box-shadow: 0 0 8px var(--accent-amber);"></span>
+                  ALARM ARMED
+                </div>
+                <div id="tabAlarmTargetText" style="font-size: 0.8rem; font-weight: 700; color: var(--text); margin-top: 3px;">Approaching your stop</div>
+              </div>
+              <button class="chip" style="padding: 4px 10px; font-size: 0.72rem; color: var(--accent-red);" onclick="cancelActiveAlarm()">Cancel</button>
+            </div>
+          </div>
+
+          <button class="primary-btn" onclick="armAlarmFromTab()" style="margin-bottom: 10px;">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            <span>Arm Proximity Alarm</span>
+          </button>
+
+          <button class="neu-action-btn" style="width: 100%;" onclick="testAlarmMelodyAndSpeech()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+            </svg>
+            <span>Test Chime & Voice Alert</span>
+          </button>
+        </div>
+
+        <!-- App Accreditation & Coffee Card -->
+        <div class="neu-card" style="text-align: center;">
+          <div class="brand-icon-box" style="margin: 0 auto 10px; width: 54px; height: 54px;">
+            <img src="/logo.png" alt="BMTC Live Logo" class="brand-logo-img">
+          </div>
+          <div style="font-size: 1.1rem; font-weight: 800; color: var(--text);">Namma BMTC Tracker</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-top: 2px;">
+            Bengaluru Smart Bus Telematics
+          </div>
+
+          <div style="margin: 16px 0 12px; padding: 12px; border-radius: 14px; background: var(--bg); box-shadow: var(--neu-inset-sm);">
+            <div style="font-size: 0.84rem; font-weight: 700; color: var(--text);">
+              Built with ❤️ by <strong>Saksham Talwar</strong>
+            </div>
+            <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">
+              UPI: <code style="font-weight: 800; color: var(--text);">saksham.talwar@federal</code>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 8px;">
+            <button class="primary-btn" style="flex: 1; padding: 11px;" onclick="openCoffeeModal()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10 2v2"/><path d="M14 2v2"/><path d="M6 2v2"/>
+                <path d="M18 8a3 3 0 0 1 3 3c0 2-1 3-3 3h-1"/>
+                <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/>
+              </svg>
+              <span>Buy Coffee</span>
+            </button>
+            <button class="neu-action-btn" style="flex: 1; padding: 11px;" onclick="openSplashScreen()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+              </svg>
+              <span>About App</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      <button class="primary-btn" id="findBusesBtn" onclick="searchBusRoutePlan()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+    </div> <!-- /#tabsSlider -->
+  </div> <!-- /#tabsViewport -->
+
+  <!-- Fixed Bottom Floating Dock -->
+  <nav class="bottom-dock" id="bottomDock">
+    <button class="dock-item active" id="dockTab0" onclick="switchTab(0)" aria-label="Live Radar">
+      <div class="dock-icon">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/>
         </svg>
-        <span>Find Buses & Connecting Routes</span>
-      </button>
-    </div>
+      </div>
+      <span class="dock-label">Radar</span>
+    </button>
 
-    <!-- Planner Results Container -->
-    <div id="plannerResultsArea" style="margin-top: 16px;"></div>
-  </div>
+    <button class="dock-item" id="dockTab1" onclick="switchTab(1)" aria-label="1-Tap Commute">
+      <div class="dock-icon">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+        </svg>
+      </div>
+      <span class="dock-label">Commute</span>
+    </button>
 
-  <!-- Built with Love Footer -->
-  <footer class="app-footer">
-    <div style="font-size: 0.88rem; font-weight: 700; color: var(--text);">
-      Built with ❤️ by <strong>Saksham Talwar</strong>
-    </div>
-    <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 5px; font-weight: 500;">
-      Real-time BMTC transit telemetry for Bengaluru commuters
-    </div>
-  </footer>
+    <button class="dock-item" id="dockTab2" onclick="switchTab(2)" aria-label="Route Finder">
+      <div class="dock-icon">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M12 19h4.5a3.5 3.5 0 0 0 0-7h-9a3.5 3.5 0 0 1 0-7H12"/>
+        </svg>
+      </div>
+      <span class="dock-label">Finder</span>
+    </button>
+
+    <button class="dock-item" id="dockTab3" onclick="switchTab(3)" aria-label="Wake-Up Alarm & Settings">
+      <div class="dock-icon">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+      </div>
+      <span class="dock-label">Alarm</span>
+    </button>
+  </nav>
 
   <!-- Destination Wake-Up Alarm Config Modal -->
   <div id="alarmConfigModal" class="modal-overlay" style="display: none;" onclick="closeAlarmConfigModal(event)">
@@ -2461,49 +2708,93 @@
 
     function updateAlarmPillUI() {
       const headerBtn = document.getElementById('alarmHeaderBtn');
-      if (headerBtn) {
-        if (activeAlarm) {
+      const tabBanner = document.getElementById('tabAlarmStatusBanner');
+      const tabTargetText = document.getElementById('tabAlarmTargetText');
+
+      if (activeAlarm) {
+        if (headerBtn) {
           headerBtn.style.color = 'var(--accent-amber)';
           headerBtn.style.boxShadow = 'var(--neu-inset-sm)';
-        } else {
+        }
+        if (tabBanner) tabBanner.style.display = 'block';
+        if (tabTargetText) {
+          tabTargetText.innerText = `Approaching: ${activeAlarm.targetStop} (~${activeAlarm.thresholdKm} km)`;
+        }
+      } else {
+        if (headerBtn) {
           headerBtn.style.color = '#b45309';
           headerBtn.style.boxShadow = 'var(--neu-raised-sm)';
         }
+        if (tabBanner) tabBanner.style.display = 'none';
       }
     }
 
-    function checkActiveBusAlarms(buses) {
-      if (!activeAlarm || activeAlarm.type !== 'bus' || !buses) return;
-      const bus = buses.find(b => b.vehicleNumber === activeAlarm.busNumber);
-      if (bus && bus.targetStopAnalysis) {
-        const d = bus.targetStopAnalysis.distanceKm;
-        if (!bus.targetStopAnalysis.hasPassed && d <= activeAlarm.thresholdKm) {
-          startRingingAlarm(`${activeAlarm.targetStop} (Bus ${bus.vehicleNumber})`);
+    // Active Tab State (0: Radar, 1: Commute, 2: Finder, 3: Alarm)
+    let currentTabIndex = 0;
+    const totalTabs = 4;
+    const tabNames = ['RADAR', 'COMMUTE', 'FINDER', 'ALARM'];
+
+    function switchTab(index, animate = true) {
+      if (index < 0 || index >= totalTabs) return;
+      currentTabIndex = index;
+
+      const slider = document.getElementById('tabsSlider');
+      if (slider) {
+        slider.style.transition = animate ? 'transform 0.32s cubic-bezier(0.25, 1, 0.5, 1)' : 'none';
+        slider.style.transform = `translateX(-${currentTabIndex * 25}%)`;
+      }
+
+      // Update Tab Panels active class
+      for (let i = 0; i < totalTabs; i++) {
+        const panel = document.getElementById(`panel${i}`);
+        if (panel) {
+          if (i === currentTabIndex) panel.classList.add('active');
+          else panel.classList.remove('active');
+        }
+
+        const dockItem = document.getElementById(`dockTab${i}`);
+        if (dockItem) {
+          if (i === currentTabIndex) dockItem.classList.add('active');
+          else dockItem.classList.remove('active');
+        }
+
+        const dot = document.getElementById(`swipeDot${i}`);
+        if (dot) {
+          if (i === currentTabIndex) dot.classList.add('active');
+          else dot.classList.remove('active');
         }
       }
+
+      // Update Header Tab Badge
+      const headerBadge = document.getElementById('headerTabBadge');
+      if (headerBadge) {
+        headerBadge.innerText = tabNames[currentTabIndex];
+      }
+
+      // Invalidate map size if switching to Radar tab
+      if (currentTabIndex === 0 && map) {
+        setTimeout(() => map.invalidateSize(), 300);
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // Tab Navigation Switcher (Radar vs Planner)
-    function switchMainTab(tab) {
-      const radarBtn = document.getElementById('tabRadarBtn');
-      const plannerBtn = document.getElementById('tabPlannerBtn');
-      const radarSec = document.getElementById('radarSection');
-      const plannerSec = document.getElementById('plannerSection');
-
-      if (tab === 'planner') {
-        plannerBtn?.classList.add('active');
-        radarBtn?.classList.remove('active');
-        if (radarSec) radarSec.style.display = 'none';
-        if (plannerSec) plannerSec.style.display = 'block';
-      } else {
-        radarBtn?.classList.add('active');
-        plannerBtn?.classList.remove('active');
-        if (plannerSec) plannerSec.style.display = 'none';
-        if (radarSec) radarSec.style.display = 'block';
-        if (map) {
-          setTimeout(() => map.invalidateSize(), 200);
-        }
+    // Arm Alarm from Tab 3
+    function armAlarmFromTab() {
+      const input = document.getElementById('tabAlarmDestinationInput');
+      const val = input ? input.value.trim() : '';
+      if (!val) {
+        alert("Please enter a destination bus stand name.");
+        return;
       }
+      const modalInput = document.getElementById('alarmDestinationInput');
+      if (modalInput) modalInput.value = val;
+      confirmDestinationAlarm();
+    }
+
+    // Test Alert Melody and Voice
+    function testAlarmMelodyAndSpeech() {
+      startRingingAlarm("Domlur Bus Stand (Test Alert)");
     }
 
     // Swap Origin and Destination
@@ -2593,7 +2884,7 @@
     function trackDirectBus(routeName) {
       const routeInput = document.getElementById('routeInput');
       if (routeInput) routeInput.value = routeName;
-      switchMainTab('radar');
+      switchTab(0);
       track();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -2841,9 +3132,78 @@
       }
     }
 
+    // Touch Swipe Navigation for #tabsViewport
+    function initSwipeGestures() {
+      const viewport = document.getElementById('tabsViewport');
+      if (!viewport) return;
+
+      let startX = 0;
+      let startY = 0;
+      let startTime = 0;
+      let isTrackingTouch = false;
+
+      viewport.addEventListener('touchstart', (e) => {
+        // Do not intercept touches on the interactive Leaflet map container or scrollable chips
+        if (e.target.closest('#map') || e.target.closest('.leaflet-container') || e.target.closest('.chips-wrapper')) {
+          isTrackingTouch = false;
+          return;
+        }
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        startTime = Date.now();
+        isTrackingTouch = true;
+      }, { passive: true });
+
+      viewport.addEventListener('touchmove', (e) => {
+        if (!isTrackingTouch) return;
+        const currentY = e.touches[0].clientY;
+        const currentX = e.touches[0].clientX;
+        const diffX = currentX - startX;
+        const diffY = currentY - startY;
+
+        // If movement is predominantly vertical, let standard scroll handle it
+        if (Math.abs(diffY) > Math.abs(diffX) * 1.4) {
+          isTrackingTouch = false;
+        }
+      }, { passive: true });
+
+      viewport.addEventListener('touchend', (e) => {
+        if (!isTrackingTouch) return;
+        isTrackingTouch = false;
+
+        const endX = e.changedTouches[0].clientX;
+        const endY = e.changedTouches[0].clientY;
+        const diffX = endX - startX;
+        const diffY = endY - startY;
+        const duration = Date.now() - startTime;
+
+        // Swipe threshold: at least 45px, predominantly horizontal, within 600ms
+        if (Math.abs(diffX) > 45 && Math.abs(diffX) > Math.abs(diffY) && duration < 600) {
+          if (diffX < 0 && currentTabIndex < totalTabs - 1) {
+            // Swipe Left -> Next Tab
+            switchTab(currentTabIndex + 1);
+          } else if (diffX > 0 && currentTabIndex > 0) {
+            // Swipe Right -> Previous Tab
+            switchTab(currentTabIndex - 1);
+          }
+        }
+      }, { passive: true });
+
+      // Keyboard Arrow Navigation
+      window.addEventListener('keydown', (e) => {
+        if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
+        if (e.key === 'ArrowRight' && currentTabIndex < totalTabs - 1) {
+          switchTab(currentTabIndex + 1);
+        } else if (e.key === 'ArrowLeft' && currentTabIndex > 0) {
+          switchTab(currentTabIndex - 1);
+        }
+      });
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       checkSplashOnLoad();
       updateAssistantUrl();
+      initSwipeGestures();
       initMap();
       track();
     });
