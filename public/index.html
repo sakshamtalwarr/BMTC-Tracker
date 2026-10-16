@@ -991,6 +991,13 @@
       </div>
     </div>
     <div style="display: flex; align-items: center; gap: 8px;">
+      <!-- Destination Wake-Up Alarm Button -->
+      <button class="coffee-icon-btn" id="alarmHeaderBtn" onclick="openAlarmConfigModal()" title="Destination Wake-Up Alarm" aria-label="Destination Wake-Up Alarm">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+      </button>
+
       <!-- Buy Me a Coffee Icon Only Button -->
       <button class="coffee-icon-btn" onclick="openCoffeeModal()" title="Buy me a coffee" aria-label="Buy me a coffee">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1184,6 +1191,94 @@
     </div>
   </footer>
 
+  <!-- Destination Wake-Up Alarm Config Modal -->
+  <div id="alarmConfigModal" class="modal-overlay" style="display: none;" onclick="closeAlarmConfigModal(event)">
+    <div class="neu-modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="coffee-modal-icon" style="color: var(--accent-amber);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+          </div>
+          <div>
+            <div style="font-size: 1.05rem; font-weight: 800; color: var(--text);">Wake-Up Alarm</div>
+            <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">Destination Proximity Alert</div>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeAlarmConfigModal()">&times;</button>
+      </div>
+
+      <p style="font-size: 0.82rem; color: var(--text); line-height: 1.4; margin: 14px 0 12px;">
+        Never miss your stop again! Set an alarm and we'll chime and speak aloud when you are approaching your stop.
+      </p>
+
+      <div class="input-field-wrap">
+        <label>Destination Bus Stand</label>
+        <div class="input-inner-wrap">
+          <div class="field-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+            </svg>
+          </div>
+          <input type="text" id="alarmDestinationInput" class="neu-input" placeholder="e.g. Domlur, RM Guttahalli, Silk Board">
+        </div>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <label style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Alert Distance</label>
+        <div class="chips-wrapper" style="padding-bottom: 4px;">
+          <button class="chip active" data-radius="1.0" onclick="selectAlarmRadius(this, 1.0)">1.0 km (~5 min)</button>
+          <button class="chip" data-radius="0.5" onclick="selectAlarmRadius(this, 0.5)">500 m (~2 min)</button>
+          <button class="chip" data-radius="2.0" onclick="selectAlarmRadius(this, 2.0)">2.0 km (~10 min)</button>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px;">
+        <button class="primary-btn" id="armAlarmBtn" style="flex: 2; padding: 12px;" onclick="confirmDestinationAlarm()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <span id="armAlarmBtnText">Arm Wake-Up Alarm</span>
+        </button>
+        <button class="neu-action-btn" style="flex: 1; padding: 12px; font-size: 0.76rem;" onclick="testAlarmChime()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+          </svg>
+          <span>Test Chime</span>
+        </button>
+      </div>
+
+      <div id="activeAlarmStatusNotice" style="display: none; margin-top: 12px; font-size: 0.74rem; color: var(--accent-amber); font-weight: 700;"></div>
+    </div>
+  </div>
+
+  <!-- Ringing Wake-Up Alarm Modal -->
+  <div id="ringingAlarmModal" class="modal-overlay" style="display: none; z-index: 10005;">
+    <div class="neu-modal" style="text-align: center; border: 2px solid var(--accent-amber);">
+      <div style="width: 60px; height: 60px; border-radius: 50%; background: var(--bg); box-shadow: var(--neu-raised); color: var(--accent-amber); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; animation: pulse 1s infinite;">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+      </div>
+
+      <div style="font-size: 1.3rem; font-weight: 800; color: var(--text);">WAKE UP!</div>
+      <div style="font-size: 0.92rem; font-weight: 800; color: var(--accent-amber); margin: 6px 0;">
+        Approaching: <span id="ringingStopName">Your Destination</span>
+      </div>
+      <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 20px;">
+        You have entered your alert radius. Please prepare to alight from the bus!
+      </p>
+
+      <button class="primary-btn" style="background: var(--bg); color: var(--accent-amber); box-shadow: var(--neu-raised); padding: 14px; font-size: 1rem;" onclick="stopRingingAlarm()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+        <span>Dismiss Alarm</span>
+      </button>
+    </div>
+  </div>
+
   <!-- Buy Me a Coffee Modal -->
   <div id="coffeeModal" class="modal-overlay" style="display: none;" onclick="closeCoffeeModal(event)">
     <div class="neu-modal" onclick="event.stopPropagation()">
@@ -1244,8 +1339,8 @@
       map: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/></svg>`,
       external: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>`,
       refresh: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>`,
-      arrowRight: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>`,
-      info: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`
+      info: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`,
+      bell: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`
     };
 
     let map = null;
@@ -1593,11 +1688,15 @@
             <div class="card-actions">
               <button class="neu-action-btn" onclick="event.stopPropagation(); focusBus('${b.vehicleNumber}')">
                 ${SVG_ICONS.map}
-                <span>Focus on Map</span>
+                <span>Focus</span>
+              </button>
+              <button class="neu-action-btn" id="cardAlarmBtn_${b.vehicleNumber}" onclick="event.stopPropagation(); toggleBusAlarm('${b.vehicleNumber}', '${b.targetStopAnalysis ? b.targetStopAnalysis.targetStop : (b.destination || '')}')">
+                ${SVG_ICONS.bell}
+                <span id="cardAlarmLabel_${b.vehicleNumber}">${activeAlarm && activeAlarm.busNumber === b.vehicleNumber ? 'Armed' : 'Alarm'}</span>
               </button>
               <a class="neu-action-btn" href="${b.googleMapsLink}" target="_blank" onclick="event.stopPropagation()">
                 ${SVG_ICONS.external}
-                <span>Google Maps</span>
+                <span>Maps</span>
               </a>
             </div>
           </div>
@@ -1690,6 +1789,7 @@
         renderDirectionChips(data.buses);
         renderMap(data, currentFilterDirection);
         renderCards(data, currentFilterDirection);
+        checkActiveBusAlarms(data.buses);
 
       } catch (err) {
         document.getElementById('resultsList').innerHTML = `
@@ -1955,6 +2055,216 @@
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
       );
+    }
+
+    // Destination Alarm Engine
+    let activeAlarm = null; // { type: 'bus' | 'gps', targetStop: string, targetLat?: number, targetLon?: number, busNumber?: string, thresholdKm: number }
+    let selectedAlarmRadius = 1.0;
+    let audioCtx = null;
+    let alarmRingInterval = null;
+    let gpsAlarmWatcherId = null;
+
+    function selectAlarmRadius(btn, radius) {
+      selectedAlarmRadius = radius;
+      document.querySelectorAll('#alarmConfigModal .chip').forEach(c => {
+        c.classList.toggle('active', c === btn);
+      });
+    }
+
+    function openAlarmConfigModal() {
+      const modal = document.getElementById('alarmConfigModal');
+      const stopInput = document.getElementById('stopInput');
+      const alarmDest = document.getElementById('alarmDestinationInput');
+      if (alarmDest && stopInput && stopInput.value.trim()) {
+        alarmDest.value = stopInput.value.trim();
+      }
+      const notice = document.getElementById('activeAlarmStatusNotice');
+      if (notice) {
+        if (activeAlarm) {
+          notice.style.display = 'block';
+          notice.innerHTML = `Active Alarm: Armed for "${activeAlarm.targetStop}" within ${activeAlarm.thresholdKm >= 1 ? activeAlarm.thresholdKm + ' km' : Math.round(activeAlarm.thresholdKm * 1000) + 'm'}. <a href="javascript:void(0)" onclick="cancelActiveAlarm()" style="color: #ef4444; margin-left: 6px;">Cancel</a>`;
+        } else {
+          notice.style.display = 'none';
+        }
+      }
+      if (modal) modal.style.display = 'flex';
+    }
+
+    function closeAlarmConfigModal() {
+      const modal = document.getElementById('alarmConfigModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function playTone(freq, startTime, duration) {
+      try {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, startTime);
+        gain.gain.setValueAtTime(0.35, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+      } catch (e) {
+        console.warn("Audio chime error:", e);
+      }
+    }
+
+    function testAlarmChime() {
+      const now = (audioCtx || new (window.AudioContext || window.webkitAudioContext)()).currentTime;
+      playTone(587.33, now, 0.22); // D5
+      playTone(880.00, now + 0.24, 0.3); // A5
+      playTone(1174.66, now + 0.5, 0.45); // D6
+      if ('speechSynthesis' in window) {
+        const speech = new SpeechSynthesisUtterance("Test chime. Your destination alarm will sound like this!");
+        speech.rate = 1.0;
+        window.speechSynthesis.speak(speech);
+      }
+    }
+
+    function startRingingAlarm(stopName) {
+      const ringMelody = () => {
+        try {
+          const now = (audioCtx || new (window.AudioContext || window.webkitAudioContext)()).currentTime;
+          playTone(659.25, now, 0.2); // E5
+          playTone(880.00, now + 0.22, 0.25); // A5
+          playTone(1318.51, now + 0.45, 0.4); // E6
+        } catch (_) {}
+      };
+
+      if (!alarmRingInterval) {
+        ringMelody();
+        alarmRingInterval = setInterval(ringMelody, 1600);
+      }
+
+      if ('vibrate' in navigator) {
+        navigator.vibrate([400, 200, 400, 200, 800]);
+      }
+
+      if ('speechSynthesis' in window) {
+        const speech = new SpeechSynthesisUtterance(`Wake up! You are approaching your destination stop, ${stopName}!`);
+        speech.rate = 1.05;
+        window.speechSynthesis.speak(speech);
+      }
+
+      const modal = document.getElementById('ringingAlarmModal');
+      const stopText = document.getElementById('ringingStopName');
+      if (stopText) stopText.innerText = stopName;
+      if (modal) modal.style.display = 'flex';
+    }
+
+    function stopRingingAlarm() {
+      if (alarmRingInterval) {
+        clearInterval(alarmRingInterval);
+        alarmRingInterval = null;
+      }
+      const modal = document.getElementById('ringingAlarmModal');
+      if (modal) modal.style.display = 'none';
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      activeAlarm = null;
+      updateAlarmPillUI();
+    }
+
+    function cancelActiveAlarm() {
+      activeAlarm = null;
+      if (gpsAlarmWatcherId) {
+        navigator.geolocation.clearWatch(gpsAlarmWatcherId);
+        gpsAlarmWatcherId = null;
+      }
+      updateAlarmPillUI();
+      closeAlarmConfigModal();
+      alert("Wake-up alarm has been cancelled.");
+    }
+
+    function confirmDestinationAlarm() {
+      const destName = document.getElementById('alarmDestinationInput').value.trim();
+      if (!destName) {
+        alert("Please enter your destination bus stand name.");
+        return;
+      }
+
+      activeAlarm = {
+        type: 'gps',
+        targetStop: destName,
+        thresholdKm: selectedAlarmRadius
+      };
+
+      const stop = lastFetchedData?.routeStops?.find(s => s.name.toLowerCase().includes(destName.toLowerCase()));
+      if (stop) {
+        activeAlarm.targetLat = stop.lat;
+        activeAlarm.targetLon = stop.lon;
+      }
+
+      if ('geolocation' in navigator) {
+        gpsAlarmWatcherId = navigator.geolocation.watchPosition(
+          (pos) => {
+            if (!activeAlarm || activeAlarm.type !== 'gps') return;
+            if (activeAlarm.targetLat && activeAlarm.targetLon) {
+              const d = haversineKm(pos.coords.latitude, pos.coords.longitude, activeAlarm.targetLat, activeAlarm.targetLon);
+              if (d <= activeAlarm.thresholdKm) {
+                startRingingAlarm(activeAlarm.targetStop);
+              }
+            }
+          },
+          null,
+          { enableHighAccuracy: true, maximumAge: 15000 }
+        );
+      }
+
+      updateAlarmPillUI();
+      closeAlarmConfigModal();
+      alert(`Alarm armed! You will be alerted when within ${selectedAlarmRadius >= 1 ? selectedAlarmRadius + ' km' : Math.round(selectedAlarmRadius * 1000) + 'm'} of ${destName}.`);
+    }
+
+    function toggleBusAlarm(vehicleNumber, targetStop) {
+      if (activeAlarm && activeAlarm.busNumber === vehicleNumber) {
+        cancelActiveAlarm();
+        return;
+      }
+
+      activeAlarm = {
+        type: 'bus',
+        busNumber: vehicleNumber,
+        targetStop: targetStop || 'your stop',
+        thresholdKm: 1.2
+      };
+
+      updateAlarmPillUI();
+      alert(`Wake-Up Alarm set for Bus ${vehicleNumber}! You will hear an alert when it is within ~1.2 km of ${targetStop || 'your stop'}.`);
+    }
+
+    function updateAlarmPillUI() {
+      const headerBtn = document.getElementById('alarmHeaderBtn');
+      if (headerBtn) {
+        if (activeAlarm) {
+          headerBtn.style.color = 'var(--accent-amber)';
+          headerBtn.style.boxShadow = 'var(--neu-inset-sm)';
+        } else {
+          headerBtn.style.color = '#b45309';
+          headerBtn.style.boxShadow = 'var(--neu-raised-sm)';
+        }
+      }
+    }
+
+    function checkActiveBusAlarms(buses) {
+      if (!activeAlarm || activeAlarm.type !== 'bus' || !buses) return;
+      const bus = buses.find(b => b.vehicleNumber === activeAlarm.busNumber);
+      if (bus && bus.targetStopAnalysis) {
+        const d = bus.targetStopAnalysis.distanceKm;
+        if (!bus.targetStopAnalysis.hasPassed && d <= activeAlarm.thresholdKm) {
+          startRingingAlarm(`${activeAlarm.targetStop} (Bus ${bus.vehicleNumber})`);
+        }
+      }
     }
 
     // PWA Service Worker Registration
