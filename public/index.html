@@ -895,6 +895,28 @@
       margin-top: 12px;
       font-weight: 600;
     }
+
+    /* Near Me GPS Button */
+    .near-me-btn {
+      background: var(--bg);
+      border: none;
+      color: var(--accent-blue);
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 12px;
+      box-shadow: var(--neu-raised-sm);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s ease;
+    }
+
+    .near-me-btn:active {
+      box-shadow: var(--neu-inset-sm);
+      transform: scale(0.96);
+    }
   </style>
 </head>
 <body>
@@ -1063,7 +1085,15 @@
     </div>
 
     <div class="input-field-wrap">
-      <label>Boarding Stop (For Real-Time ETA)</label>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+        <label style="margin-bottom: 0;">Boarding Stop (For Real-Time ETA)</label>
+        <button type="button" class="near-me-btn" onclick="locateNearestBusStop()" title="Detect nearest BMTC stop via GPS">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+          </svg>
+          <span id="nearMeBtnLabel">Near Me (GPS)</span>
+        </button>
+      </div>
       <div class="input-inner-wrap">
         <div class="field-icon">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1072,6 +1102,8 @@
         </div>
         <input type="text" id="stopInput" class="neu-input" placeholder="e.g. Domlur, RM Guttahalli, Silk Board">
       </div>
+      <!-- Nearest Stop GPS Banner -->
+      <div id="nearestStopBanner" style="display: none; margin-top: 8px;"></div>
     </div>
 
     <button class="primary-btn" id="trackBtn" onclick="track()">
@@ -1763,6 +1795,166 @@
           label.innerText = 'Copied!';
         }
       }
+    }
+
+    // Near Me GPS Locator
+    let userLocationMarker = null;
+    let userLocationCircle = null;
+    let walkingRouteLine = null;
+
+    function haversineKm(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = ((lat2 - lat1) * Math.PI) / 180;
+      const dLon = ((lon2 - lon1) * Math.PI) / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos((lat1 * Math.PI) / 180) *
+          Math.cos((lat2 * Math.PI) / 180) *
+          Math.sin(dLon / 2) *
+          Math.sin(dLon / 2);
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    async function locateNearestBusStop() {
+      const btn = document.getElementById('nearMeBtnLabel');
+      const banner = document.getElementById('nearestStopBanner');
+
+      if (!('geolocation' in navigator)) {
+        alert("GPS geolocation is not supported by your browser/device.");
+        return;
+      }
+
+      const origText = btn ? btn.innerText : 'Near Me (GPS)';
+      if (btn) btn.innerText = 'Locating...';
+
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const userLat = position.coords.latitude;
+          const userLon = position.coords.longitude;
+          const accuracy = position.coords.accuracy;
+
+          if (btn) btn.innerText = 'Found GPS!';
+          setTimeout(() => { if (btn) btn.innerText = origText; }, 2500);
+
+          // Plot User on Map
+          if (map) {
+            if (userLocationMarker) map.removeLayer(userLocationMarker);
+            if (userLocationCircle) map.removeLayer(userLocationCircle);
+            if (walkingRouteLine) map.removeLayer(walkingRouteLine);
+
+            const userIcon = L.divIcon({
+              className: 'custom-user-icon',
+              html: `
+                <div style="position: relative; width: 24px; height: 24px;">
+                  <div style="position: absolute; inset: 0; background: #2563eb; border-radius: 50%; opacity: 0.35; animation: pulse 1.6s infinite;"></div>
+                  <div style="position: absolute; inset: 4px; background: #2563eb; border: 2.5px solid #ffffff; border-radius: 50%; box-shadow: 0 0 8px rgba(37,99,235,0.8);"></div>
+                </div>
+              `,
+              iconSize: [24, 24],
+              iconAnchor: [12, 12]
+            });
+
+            userLocationMarker = L.marker([userLat, userLon], { icon: userIcon })
+              .bindPopup('<b style="font-size:12px; color:#1e293b;">📍 You Are Here</b>')
+              .addTo(map);
+
+            userLocationCircle = L.circle([userLat, userLon], {
+              radius: Math.min(accuracy, 200),
+              color: '#2563eb',
+              fillColor: '#3b82f6',
+              fillOpacity: 0.1,
+              weight: 1
+            }).addTo(map);
+          }
+
+          // Compute closest stop from routeStops or known transit stops
+          let stopsToSearch = (lastFetchedData && lastFetchedData.routeStops && lastFetchedData.routeStops.length > 0)
+            ? lastFetchedData.routeStops
+            : [
+                { name: 'Domlur Bus Stand', lat: 12.9609, lon: 77.6387 },
+                { name: 'RM Guttahalli', lat: 13.0039, lon: 77.5794 },
+                { name: 'Kempegowda Bus Station (Majestic)', lat: 12.9772, lon: 77.5713 },
+                { name: 'Shivajinagar Bus Station', lat: 12.9858, lon: 77.6057 },
+                { name: 'Central Silk Board', lat: 12.9177, lon: 77.6238 },
+                { name: 'Hebbala', lat: 13.0358, lon: 77.5970 },
+                { name: 'HSR Layout BDA Complex', lat: 12.9116, lon: 77.6389 },
+                { name: 'Koramangala Bus Station', lat: 12.9344, lon: 77.6200 },
+                { name: 'Indiranagar 100Ft Road', lat: 12.9719, lon: 77.6412 },
+                { name: 'Mekhri Circle', lat: 13.0084, lon: 77.5833 },
+                { name: 'Banashankari Bus Stand', lat: 12.9155, lon: 77.5736 },
+                { name: 'Murugeshpalya', lat: 12.9567, lon: 77.6548 }
+              ];
+
+          let nearest = null;
+          let minDistance = Infinity;
+
+          stopsToSearch.forEach(s => {
+            if (s.lat && s.lon) {
+              const d = haversineKm(userLat, userLon, s.lat, s.lon);
+              if (d < minDistance) {
+                minDistance = d;
+                nearest = { ...s, distKm: d };
+              }
+            }
+          });
+
+          if (nearest) {
+            document.getElementById('stopInput').value = nearest.name;
+
+            const distMeters = Math.round(nearest.distKm * 1000);
+            const walkMins = Math.max(1, Math.round((nearest.distKm / 4.5) * 60));
+            const mapsWalkingUrl = `https://www.google.com/maps/dir/?api=1&origin=${userLat},${userLon}&destination=${nearest.lat},${nearest.lon}&travelmode=walking`;
+
+            if (banner) {
+              banner.style.display = 'block';
+              banner.innerHTML = `
+                <div style="background: var(--bg); box-shadow: var(--neu-inset-sm); border-radius: 14px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                  <div>
+                    <div style="font-size: 0.72rem; font-weight: 700; color: var(--accent-blue); text-transform: uppercase;">
+                      📍 Nearest BMTC Bus Stop
+                    </div>
+                    <div style="font-size: 0.88rem; font-weight: 800; color: var(--text); margin-top: 2px;">
+                      ${nearest.name}
+                    </div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 1px;">
+                      ${distMeters < 1000 ? distMeters + ' meters' : nearest.distKm.toFixed(1) + ' km'} away &bull; ~${walkMins} min walk
+                    </div>
+                  </div>
+                  <a class="near-me-btn" href="${mapsWalkingUrl}" target="_blank" style="text-decoration: none; padding: 8px 12px; flex-shrink: 0;">
+                    Walk
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+                    </svg>
+                  </a>
+                </div>
+              `;
+            }
+
+            if (map) {
+              walkingRouteLine = L.polyline([[userLat, userLon], [nearest.lat, nearest.lon]], {
+                color: '#2563eb',
+                weight: 3,
+                dashArray: '6, 8',
+                opacity: 0.8
+              }).addTo(map);
+
+              const group = L.featureGroup([userLocationMarker, L.marker([nearest.lat, nearest.lon])]);
+              map.fitBounds(group.getBounds(), { padding: [50, 50] });
+            }
+
+            track();
+          }
+        },
+        (error) => {
+          if (btn) btn.innerText = origText;
+          let msg = "Could not retrieve GPS location.";
+          if (error.code === 1) msg = "Location permission denied. Please allow location access in your browser.";
+          else if (error.code === 2) msg = "Position unavailable. Please ensure GPS is turned on.";
+          else if (error.code === 3) msg = "Location request timed out.";
+          alert(msg);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      );
     }
 
     // PWA Service Worker Registration
