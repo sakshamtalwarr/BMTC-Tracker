@@ -6,6 +6,7 @@ const trackHandler = require('./api/track');
 const stopsHandler = require('./api/stops');
 const assistantHandler = require('./api/assistant');
 const commuteHandler = require('./api/commute');
+const planHandler = require('./api/plan');
 
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -29,6 +30,10 @@ const server = http.createServer(async (req, res) => {
 
   if (pathname === '/api/commute') {
     return commuteHandler(req, res);
+  }
+
+  if (pathname === '/api/plan') {
+    return planHandler(req, res);
   }
 
   // Serve static files from /public

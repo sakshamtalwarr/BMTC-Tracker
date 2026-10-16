@@ -377,10 +377,238 @@ function decodePolyline(str, precision = 5) {
   };
 }
 
+// In-memory cache for all bus stops and stop details
+let cachedStops = null;
+let lastStopsFetch = 0;
+const stopDetailsCache = new Map();
+
+/**
+ * Fetch all bus stops in Bengaluru
+ */
+async function getAllBusStops() {
+  const now = Date.now();
+  if (cachedStops && now - lastStopsFetch < CACHE_TTL_MS) {
+    return cachedStops;
+  }
+
+  const today = DAYS[new Date().getDay()];
+  const res = await fetch(`${BASE_URL}/scheduler_v4/v4/bengaluru/stops?day=${today}`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch stops: HTTP ${res.status}`);
+  }
+
+  const stops = await res.json();
+  cachedStops = Array.isArray(stops) ? stops : [];
+  lastStopsFetch = now;
+  return cachedStops;
+}
+
+/**
+ * Fetch trips/routes passing through a stop with in-memory caching
+ */
+async function getStopDetailsCached(stopId) {
+  if (stopDetailsCache.has(stopId)) {
+    return stopDetailsCache.get(stopId);
+  }
+
+  const today = DAYS[new Date().getDay()];
+  try {
+    const res = await fetch(`${BASE_URL}/scheduler_v4/v4/bengaluru/stopdetails?day=${today}&stop_id=${stopId}`);
+    if (!res.ok) return [];
+    const json = await res.json();
+    const trips = Array.isArray(json) ? json : [];
+    stopDetailsCache.set(stopId, trips);
+    return trips;
+  } catch (e) {
+    console.error(`Stop details error for ${stopId}:`, e.message);
+    return [];
+  }
+}
+
+/**
+ * Major BMTC transit interchange hubs for multi-bus connections
+ */
+const TRANSIT_HUBS = [
+  { name: 'Majestic (KBS)', query: 'Kempegowda Bus Station' },
+  { name: 'Shivajinagara Bus Station', query: 'Shivajinagara Bus Station' },
+  { name: 'Central Silk Board', query: 'Central Silk Board' },
+  { name: 'Domlur Bus Stand', query: 'Domlur' },
+  { name: 'Hebbala', query: 'Hebbala' },
+  { name: 'Banashankari Bus Station', query: 'Banashankari Bus Station' },
+  { name: 'Tin Factory / KR Puram', query: 'Tin Factory' },
+  { name: 'Shantinagara TTMC', query: 'Shantinagara Bus Station' },
+  { name: 'Yeshwanthapura', query: 'Yeshwanthapura Bus Station' },
+  { name: 'Electronic City', query: 'Electronic City' },
+  { name: 'Kempegowda Int. Airport', query: 'Kempegowda International Airport' },
+  { name: 'Koramangala', query: 'Koramangala Bus Station' },
+  { name: 'Jayanagar 4th Block', query: 'Jayanagara 4th Block' },
+  { name: 'Marathahalli Bridge', query: 'Marathahalli' },
+];
+
+/**
+ * Point A to Point B Bus Finder with direct buses and multi-bus transfer planner
+ */
+async function planTrip(fromQuery, toQuery) {
+  if (!fromQuery || !toQuery) {
+    throw new Error('Both origin (from) and destination (to) are required');
+  }
+
+  const fQ = fromQuery.trim().toLowerCase();
+  const tQ = toQuery.trim().toLowerCase();
+
+  const [allStops, allRoutes] = await Promise.all([
+    getAllBusStops(),
+    getAllRoutes(),
+  ]);
+
+  // Find matching stops for origin and destination
+  const oStops = allStops.filter((s) => s.stop_name && s.stop_name.toLowerCase().includes(fQ)).slice(0, 6);
+  const dStops = allStops.filter((s) => s.stop_name && s.stop_name.toLowerCase().includes(tQ)).slice(0, 6);
+
+  const bestOriginName = oStops.length > 0 ? oStops[0].stop_name : fromQuery.trim();
+  const bestDestName = dStops.length > 0 ? dStops[0].stop_name : toQuery.trim();
+
+  // 1. Direct Terminal Routes from allRoutes catalogue
+  const directMap = new Map();
+  for (const r of allRoutes) {
+    const fStop = (r.first_stop_name || '').toLowerCase();
+    const lStop = (r.last_stop_name || '').toLowerCase();
+    const isDirectForward = fStop.includes(fQ) && lStop.includes(tQ);
+    const isDirectReverse = fStop.includes(tQ) && lStop.includes(fQ);
+
+    if (isDirectForward || isDirectReverse) {
+      const base = r.route_name.split(/\s+/)[0];
+      if (!directMap.has(base)) {
+        directMap.set(base, {
+          route: base,
+          fullName: r.route_name,
+          from: r.first_stop_name,
+          to: r.last_stop_name,
+          serviceType: r.spf?.[0] || 'BMTC Bus',
+          isDirect: true,
+          type: 'direct_terminal',
+        });
+      }
+    }
+  }
+
+  // 2. Direct Routes via stop details intersection
+  const oDetails = await Promise.all(oStops.map((s) => getStopDetailsCached(s.stop_id)));
+  const dDetails = await Promise.all(dStops.map((s) => getStopDetailsCached(s.stop_id)));
+
+  const oMap = new Map();
+  oDetails.flat().forEach((item) => {
+    if (item.trip?.route_name) {
+      const base = item.trip.route_name.split(/\s+/)[0];
+      if (!oMap.has(base)) oMap.set(base, item.trip);
+    }
+  });
+
+  const dMap = new Map();
+  dDetails.flat().forEach((item) => {
+    if (item.trip?.route_name) {
+      const base = item.trip.route_name.split(/\s+/)[0];
+      if (!dMap.has(base)) dMap.set(base, item.trip);
+    }
+  });
+
+  oMap.forEach((trip, base) => {
+    if (dMap.has(base) && !directMap.has(base)) {
+      directMap.set(base, {
+        route: base,
+        fullName: trip.route_name,
+        from: trip.first_stop?.stop_name || bestOriginName,
+        to: trip.last_stop?.stop_name || bestDestName,
+        serviceType: trip.spf?.[0] || 'BMTC Bus',
+        isDirect: true,
+        type: 'direct_stop',
+      });
+    }
+  });
+
+  const directRoutes = Array.from(directMap.values());
+
+  // 3. Multi-Bus Transfer Routes via Transit Interchange Hubs
+  const transferRoutes = [];
+  for (const hub of TRANSIT_HUBS) {
+    const hubLower = hub.name.toLowerCase();
+    // Skip hub if it's the same as origin or destination
+    if (hubLower.includes(fQ) || hubLower.includes(tQ) || fQ.includes(hubLower) || tQ.includes(hubLower)) {
+      continue;
+    }
+
+    const hStops = allStops
+      .filter((s) => s.stop_name && s.stop_name.toLowerCase().includes(hub.query.toLowerCase()))
+      .slice(0, 3);
+
+    if (hStops.length === 0) continue;
+
+    const hDetails = await Promise.all(hStops.map((s) => getStopDetailsCached(s.stop_id)));
+    const hMap = new Map();
+    hDetails.flat().forEach((item) => {
+      if (item.trip?.route_name) {
+        const base = item.trip.route_name.split(/\s+/)[0];
+        if (!hMap.has(base)) hMap.set(base, item.trip);
+      }
+    });
+
+    const leg1 = [];
+    oMap.forEach((trip, base) => {
+      if (hMap.has(base) && !directMap.has(base)) leg1.push(base);
+    });
+
+    const leg2 = [];
+    dMap.forEach((trip, base) => {
+      if (hMap.has(base) && !directMap.has(base)) leg2.push(base);
+    });
+
+    if (leg1.length > 0 && leg2.length > 0) {
+      transferRoutes.push({
+        hub: hub.name,
+        hubStopName: hStops[0]?.stop_name || hub.name,
+        leg1: {
+          from: bestOriginName,
+          to: hub.name,
+          routes: [...new Set(leg1)].slice(0, 6),
+          estimatedMinutes: 30,
+        },
+        transferNotice: `Transfer at ${hub.name} (interchange hub)`,
+        leg2: {
+          from: hub.name,
+          to: bestDestName,
+          routes: [...new Set(leg2)].slice(0, 6),
+          estimatedMinutes: 30,
+        },
+        totalTransfers: 1,
+      });
+    }
+  }
+
+  return {
+    success: true,
+    origin: {
+      query: fromQuery,
+      matchedStop: bestOriginName,
+    },
+    destination: {
+      query: toQuery,
+      matchedStop: bestDestName,
+    },
+    totalDirect: directRoutes.length,
+    directRoutes: directRoutes.slice(0, 15),
+    totalTransfers: transferRoutes.length,
+    transferRoutes: transferRoutes.slice(0, 6),
+  };
+}
+
 module.exports = {
   getAllRoutes,
+  getAllBusStops,
   searchRoute,
   searchBusStop,
   getRouteDetails,
+  getStopDetailsCached,
   trackBus,
+  planTrip,
 };
+
